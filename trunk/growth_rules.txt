@@ -1,0 +1,87 @@
+# Rules for growing a loop from a seed. Starting with a 1-cell loop in a grid of all off borders,
+# applying these rules at random a large number of times will tend to fill the grid with a nice 
+# wiggly loop. The relative probability of each rule can be varied to make the loop tighter (tending
+# to fill the grid completely) or looser (leaving small empty areas inside or outside).
+
+# Copyright (C) 2008 Tim Hutton, tim.hutton@gmail.com, http://www.sq3.org.uk
+# Verbatim copying and distribution of this entire file is permitted in any medium without royalty 
+# provided this notice is preserved.
+
+# (This legal note is intended to preserve your freedom to use this data, not take it away...)
+
+#---------- Rule 1: --------------
+required:
+1,0,1
+0,1,1
+-1,0,0
+0,-1,0
+-2,-1,0
+-1,-2,0
+implied:
+1,0,0
+0,1,0
+-1,0,1
+0,-1,1
+
+#         +     +     +     +     +     +                    +     +     +     +     +     +  
+#                                                                                             
+#         +     +     +     +     +     +                    +     +     +     +     +     +  
+#                     x                                                  x                    
+#         +     +  x  +  x  +     +     +                    +     +  x  +  -  +     +     +  
+#                     x     |                     =>                     |     x              
+#         +     +     +  -  +     +     +                    +     +     +  x  +     +     +  
+#                                                                                             
+#         +     +     +     +     +     +                    +     +     +     +     +     +  
+#                                                                                             
+#         +     +     +     +     +     +                    +     +     +     +     +     +  
+
+#---------- Rule 2: --------------
+required:
+-1,0,1
+1,0,0
+0,-1,0
+0,1,0
+1,-2,0
+1,2,0
+2,-1,0
+2,1,0
+implied:
+-1,0,0
+1,0,1
+0,-1,1
+0,1,1
+
+#         +     +     +     +     +     +                    +     +     +     +     +     +  
+#                                                                                             
+#         +     +     +     +     +     +                    +     +     +     +     +     +  
+#                     x                                                  x                    
+#         +     +  x  +  x  +     +     +                    +     +  -  +  x  +     +     +  
+#               |     x                           =>               x     |                    
+#         +     +  x  +  x  +     +     +                    +     +  -  +  x  +     +     +  
+#                     x                                                  x                    
+#         +     +     +     +     +     +                    +     +     +     +     +     +  
+#                                                                                             
+#         +     +     +     +     +     +                    +     +     +     +     +     +  
+
+#---------- Rule 3: --------------
+required:
+0,1,1
+1,0,1
+0,-1,1
+-1,0,0
+implied:
+-1,0,1
+1,0,0
+0,-1,0
+0,1,0
+
+#         +     +     +     +     +                    +     +     +     +     +  
+#                                                                                 
+#         +     +  -  +     +     +                    +     +  x  +     +     +  
+#               x     |                                      |     x              
+#         +     +  -  +     +     +         =>         +     +  x  +     +     +  
+#                                                                                 
+#         +     +     +     +     +                    +     +     +     +     +  
+#                                                                                 
+#         +     +     +     +     +                    +     +     +     +     +  
+
