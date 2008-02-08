@@ -1,0 +1,3 @@
+Slinker is an attempt to capture the best way to generate slitherlink-type puzzles.
+
+It is in the very earliest stages of planning and implementation.
