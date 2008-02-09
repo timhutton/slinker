@@ -74,7 +74,7 @@ class SlinkerGrid
 		/// read/write border/cell value - valid range from (0,0) to (2*width,2*height) inclusive where
 		/** the grid is stored in the following way:
 
-						0 1 2 3 4 5 6
+					   0 1 2 3 4 5 6
 					0  + - +   +   +
 					1  | 3 |
 					2  +   + - +   +    this is a 3x2 grid, stored in a 7x5 array
