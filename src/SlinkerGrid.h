@@ -78,8 +78,8 @@ class SlinkerGrid
 					0  + - +   +   +
 					1  | 3 |
 					2  +   + - +   +    this is a 3x2 grid, stored in a 7x5 array
-					3 	|       |
-					4 	+ - + - +   +
+					3  |       |
+					4  + - + - +   +
 
 			For cell entries (e.g. 1,1): value is 0,1,2,3 or UNKNOWN (shown blank).
 			For border entries (eg. 1,0): value is 0,1 for off/on, or UNKNOWN.
