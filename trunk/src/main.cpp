@@ -1,20 +1,20 @@
 /*
 	Slinker - Copyright (C) 2008 Tim Hutton, tim.hutton@gmail.com, http://www.sq3.org.uk
 
-    This file is part of Slinker.
+	This file is part of Slinker.
 
-    Slinker is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	Slinker is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    Slinker is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Slinker is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "wxWidgets_standard_headers.h"
@@ -36,13 +36,13 @@ using namespace std;
 class MyApp : public wxApp
 {
 public:
-    // override base class virtuals
-    // ----------------------------
+	// override base class virtuals
+	// ----------------------------
 
-    // this one is called on application startup and is a good place for the app
-    // initialization (doing it here and not in the ctor allows to have an error
-    // return: if OnInit() returns false, the application terminates)
-    virtual bool OnInit();
+	// this one is called on application startup and is a good place for the app
+	// initialization (doing it here and not in the ctor allows to have an error
+	// return: if OnInit() returns false, the application terminates)
+	virtual bool OnInit();
 
 	virtual int OnRun();
 };
@@ -51,12 +51,12 @@ public:
 class MyFrame : public wxFrame
 {
 public:
-    // ctor(s)
-    MyFrame(const wxString& title);
+	// ctor(s)
+	MyFrame(const wxString& title);
 
-    // event handlers (these functions should _not_ be virtual)
-    void OnQuit(wxCommandEvent& event);
-    void OnAbout(wxCommandEvent& event);
+	// event handlers (these functions should _not_ be virtual)
+	void OnQuit(wxCommandEvent& event);
+	void OnAbout(wxCommandEvent& event);
 
 	void OnSearchForSolutions(wxCommandEvent& event);
 	void OnSearchForPuzzles(wxCommandEvent& event);
@@ -65,8 +65,8 @@ public:
 	void OnTestLoopyFormat(wxCommandEvent& event);
 
 private:
-    // any class wishing to process wxWidgets events must use this macro
-    DECLARE_EVENT_TABLE()
+	// any class wishing to process wxWidgets events must use this macro
+	DECLARE_EVENT_TABLE()
 };
 
 // ----------------------------------------------------------------------------
@@ -126,22 +126,22 @@ IMPLEMENT_APP(MyApp)
 // 'Main program' equivalent: the program execution "starts" here
 bool MyApp::OnInit()
 {
-    // call the base class initialization method, currently it only parses a
-    // few common command-line options but it could be do more in the future
-    if ( !wxApp::OnInit() )
-        return false;
+	// call the base class initialization method, currently it only parses a
+	// few common command-line options but it could be do more in the future
+	if ( !wxApp::OnInit() )
+		return false;
 
-    // create the main application window
-    MyFrame *frame = new MyFrame(_T("Slinker"));
+	// create the main application window
+	MyFrame *frame = new MyFrame(_T("Slinker"));
 
-    // and show it (the frames, unlike simple controls, are not shown when
-    // created initially)
-    frame->Show(true);
+	// and show it (the frames, unlike simple controls, are not shown when
+	// created initially)
+	frame->Show(true);
 
-    // success: wxApp::OnRun() will be called which will enter the main message
-    // loop and the application will run. If we returned false here, the
-    // application would exit immediately.
-    return true;
+	// success: wxApp::OnRun() will be called which will enter the main message
+	// loop and the application will run. If we returned false here, the
+	// application would exit immediately.
+	return true;
 }
 
 int MyApp::OnRun()
@@ -168,11 +168,11 @@ int MyApp::OnRun()
 
 // frame constructor
 MyFrame::MyFrame(const wxString& title)
-       : wxFrame(NULL, wxID_ANY, title)
+	: wxFrame(NULL, wxID_ANY, title)
 {
 #if wxUSE_MENUS
-    // create a menu bar
-    wxMenu *fileMenu = new wxMenu;
+	// create a menu bar
+	wxMenu *fileMenu = new wxMenu;
 
 	wxMenu *actionsMenu = new wxMenu;
 	actionsMenu->Append(SearchForSolutions,_T("Search for solutions.."),_T("Searches for solutions"));
@@ -180,25 +180,25 @@ MyFrame::MyFrame(const wxString& title)
 	actionsMenu->Append(SearchForNewRules,_T("Search for new rules.."),_T("Given the existing rules, searches for more complex ones"));
 	actionsMenu->Append(TestLoopyFormat,_T("Test the Loopy format code..."),_T(""));
 
-    // the "About" item should be in the help menu
-    wxMenu *helpMenu = new wxMenu;
+	// the "About" item should be in the help menu
+	wxMenu *helpMenu = new wxMenu;
 	helpMenu->Append(Minimal_About, _T("&About...\tF1"), _T("Show about dialog"));
 
 	fileMenu->Append(Minimal_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
 
-    // now append the freshly created menu to the menu bar...
-    wxMenuBar *menuBar = new wxMenuBar();
-    menuBar->Append(fileMenu, _T("&File"));
+	// now append the freshly created menu to the menu bar...
+	wxMenuBar *menuBar = new wxMenuBar();
+	menuBar->Append(fileMenu, _T("&File"));
 	menuBar->Append(actionsMenu, _T("&Actions"));
-    menuBar->Append(helpMenu, _T("&Help"));
+	menuBar->Append(helpMenu, _T("&Help"));
 
-    // ... and attach this menu bar to the frame
-    SetMenuBar(menuBar);
+	// ... and attach this menu bar to the frame
+	SetMenuBar(menuBar);
 #endif // wxUSE_MENUS
 
 #if wxUSE_STATUSBAR
-    // create a status bar just for fun (by default with 1 pane only)
-    CreateStatusBar(1);
+	// create a status bar just for fun (by default with 1 pane only)
+	CreateStatusBar(1);
 #endif // wxUSE_STATUSBAR
 }
 
@@ -207,24 +207,24 @@ MyFrame::MyFrame(const wxString& title)
 
 void MyFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
-    // true is to force the frame to close
-    Close(true);
+	// true is to force the frame to close
+	Close(true);
 }
 
 void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
-    wxMessageBox(wxString::Format(
+	wxMessageBox(wxString::Format(
 					_T("Uses: %s\n")
-                    _T("\n")
+					_T("\n")
 					_T("Currently running under: %s.")
 					_T("\n\nSlinker is free software, released under GPLv3.")
 					_T("\n\nhttp://code.google.com/p/slinker/"),
-                    wxVERSION_STRING,
-                    wxGetOsDescription().c_str()
-                 ),
-                 _T("About Slinker"),
-                 wxOK | wxICON_INFORMATION,
-                 this);
+					wxVERSION_STRING,
+					wxGetOsDescription().c_str()
+				),
+				_T("About Slinker"),
+				wxOK | wxICON_INFORMATION,
+				this);
 }
 
 	// slitherlink:
@@ -263,7 +263,7 @@ void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 /* the first locally minimal 10x10 found with this program (~30mins): (back-tracking necessary to solve)
 
 +     +     +     +     +  -  +     +     +  -  +     +     +  
-   1           1        |  3  |        1  |  3  |        1     
+1           1        |  3  |        1  |  3  |        1     
 +  -  +     +  -  +  -  +     +     +     +     +  -  +  -  +  
 |     |     |  2     1     2  |           |                 |  
 +     +  -  +     +     +  -  +     +     +  -  +  -  +     +  
@@ -273,7 +273,7 @@ void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 +     +     +  -  +  -  +  -  +     +     +  -  +  -  +  -  +  
 |              1                       2  |        2     1     
 +  -  +     +     +     +     +  -  +  -  +     +  -  +     +  
-   3  |  1           1     1  |                 |     |        
+3  |  1           1     1  |                 |     |        
 +  -  +     +  -  +  -  +     +  -  +     +  -  +     +  -  +  
 |           |           |  1     3  |     |        0     2  |  
 +     +     +     +  -  +     +  -  +     +  -  +     +     +  
@@ -287,21 +287,21 @@ void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 
 A 30x30 grid that the computer can solve by just applying rules: (otherwise locally minimal)
 +     +  -  +  -  +  -  +  -  +  -  +     +  -  +     +     +     +     +     +     +     +     +  -  +  -  +  -  +  -  +     +  -  +     +  -  +     +     +     +  -  +  -  +     +  
-      |  3     1           2        |     |     |                          0                 1  |  2                 2  |     |     |     |  3  |                 |        2  |  2     
+	|  3     1           2        |     |     |                          0                 1  |  2                 2  |     |     |     |  3  |                 |        2  |  2     
 +     +  -  +     +  -  +  -  +     +     +     +  -  +     +  -  +     +     +  -  +     +     +     +  -  +  -  +     +     +     +  -  +     +  -  +     +  -  +     +     +  -  +  
-            |  3  |        3  |     |  2  |  1     2  |     |  3  |        2  |     |           |  2  |        3  |  2  |     |  1           1     3  |  2  |  2           1     2  |  
+			|  3  |        3  |     |  2  |  1     2  |     |  3  |        2  |     |           |  2  |        3  |  2  |     |  1           1     3  |  2  |  2           1     2  |  
 +     +     +  -  +     +  -  +     +     +     +     +  -  +     +  -  +  -  +     +  -  +     +     +     +  -  +     +     +     +  -  +  -  +  -  +     +     +     +  -  +     +  
-                     1  |        2  |  2  |  2                 0                       2  |     |     |  2  |        1  |     |     |              1        |        2  |     |     |  
+					1  |        2  |  2  |  2                 0                       2  |     |     |  2  |        1  |     |     |              1        |        2  |     |     |  
 +     +  -  +     +     +     +  -  +     +  -  +     +     +     +     +  -  +  -  +     +     +  -  +     +     +     +     +     +  -  +  -  +     +     +  -  +  -  +     +     +  
-      |  3  |  1        |     |              2  |  2                 1  |  2        |     |        1     2  |        2  |  2  |  2     2        |                    2     2  |  2  |  
+	|  3  |  1        |     |              2  |  2                 1  |  2        |     |        1     2  |        2  |  2  |  2     2        |                    2     2  |  2  |  
 +     +     +     +  -  +     +  -  +  -  +     +  -  +  -  +  -  +     +     +     +     +  -  +     +  -  +     +  -  +     +  -  +  -  +     +     +  -  +     +  -  +  -  +     +  
-      |     |  3  |        1           2  |  2                 2  |  2  |           |  1     2  |  2  |  2        |  3                    |     |     |  3  |     |        1     1  |  
+	|     |  3  |        1           2  |  2                 2  |  2  |           |  1     2  |  2  |  2        |  3                    |     |     |  3  |     |        1     1  |  
 +     +     +  -  +     +  -  +     +     +  -  +  -  +  -  +     +     +  -  +     +     +     +     +     +     +  -  +     +  -  +     +     +  -  +     +     +     +     +     +  
-   1  |                 |  3  |  2     1                    |  2  |  2     3  |     |  1        |     |        0        |  2  |  3  |  3  |  1              |  3  |  1              |  
+1  |                 |  3  |  2     1                    |  2  |  2     3  |     |  1        |     |        0        |  2  |  3  |  3  |  1              |  3  |  1              |  
 +     +     +  -  +  -  +     +  -  +  -  +     +     +  -  +     +  -  +  -  +     +     +     +     +  -  +     +  -  +     +     +  -  +     +     +     +  -  +     +     +  -  +  
-   1  |     |        1           1        |  1        |  3     1     2           1  |        1  |  1     2  |     |           |  1           0           1                    |  3     
+1  |     |        1           1        |  1        |  3     1     2           1  |        1  |  1     2  |     |           |  1           0           1                    |  3     
 +     +  -  +     +     +     +     +  -  +     +     +  -  +  -  +  -  +     +     +     +     +     +     +     +     +  -  +     +     +     +     +  -  +     +     +     +  -  +  
-               1           0        |                          1     2  |  1        |        1  |  1        |  2  |     |        1           0        |     |  1                 3  |  
+			1           0        |                          1     2  |  1        |        1  |  1        |  2  |     |        1           0        |     |  1                 3  |  
 +  -  +  -  +  -  +     +     +     +     +  -  +  -  +  -  +     +     +     +     +     +     +     +     +     +     +  -  +  -  +  -  +     +     +     +     +  -  +     +  -  +  
 |  2              |                 |     |        1     2  |           |        1  |  1        |        1  |  2  |                    3  |  1     2  |     |  3  |     |  2  |        
 +     +     +  -  +     +     +  -  +     +     +     +     +     +  -  +     +     +     +  -  +     +     +     +  -  +     +  -  +  -  +     +  -  +     +  -  +     +     +     +  
@@ -309,41 +309,41 @@ A 30x30 grid that the computer can solve by just applying rules: (otherwise loca
 +     +     +     +     +     +  -  +     +  -  +  -  +     +  -  +     +     +  -  +     +  -  +  -  +     +     +     +     +     +     +     +     +     +     +  -  +     +  -  +  
 |  2     1  |                       |        1        |        2     1        |  3     1     1     2  |     |        2  |     |        1        |  2     1        |  2     1     3  |  
 +  -  +     +  -  +  -  +  -  +  -  +     +     +  -  +     +  -  +  -  +     +  -  +  -  +     +     +  -  +     +  -  +     +  -  +  -  +     +  -  +  -  +     +     +  -  +  -  +  
-      |        1     1     1           1     2  |  2        |        2  |  2              |  2     0              |  2           2        |                 |  2  |     |              
+	|        1     1     1           1     2  |  2        |        2  |  2              |  2     0              |  2           2        |                 |  2  |     |              
 +     +     +     +     +     +  -  +  -  +  -  +     +  -  +     +     +  -  +     +     +  -  +     +  -  +  -  +     +     +  -  +     +  -  +  -  +     +     +     +  -  +  -  +  
-      |  2     0              |        2     2        |  3     1           2  |        0        |     |              1        |  3  |  2     1        |     |  2  |  2           2  |  
+	|  2     0              |        2     2        |  3     1           2  |        0        |     |              1        |  3  |  2     1        |     |  2  |  2           2  |  
 +     +  -  +     +     +     +  -  +  -  +  -  +     +  -  +  -  +  -  +     +     +     +  -  +     +     +     +  -  +     +     +  -  +     +     +     +     +  -  +  -  +     +  
-   0        |                          2     2  |  2     1     1        |  2  |  1        |        1  |  1        |  3  |     |  1        |           |  2  |  1           3  |     |  
+0        |                          2     2  |  2     1     1        |  2  |  1        |        1  |  1        |  3  |     |  1        |           |  2  |  1           3  |     |  
 +     +     +     +  -  +     +     +  -  +     +  -  +     +     +     +     +     +     +     +     +     +  -  +     +  -  +     +     +  -  +  -  +     +     +  -  +  -  +     +  
-         1  |     |  3  |  2        |  3  |           |        1        |  2  |  1     2  |  1        |     |        0           1                 1        |     |  3           2  |  
+		1  |     |  3  |  2        |  3  |           |        1        |  2  |  1     2  |  1        |     |        0           1                 1        |     |  3           2  |  
 +     +     +  -  +     +  -  +  -  +     +     +     +  -  +  -  +  -  +     +     +  -  +     +     +  -  +     +     +  -  +  -  +  -  +     +     +  -  +     +  -  +  -  +  -  +  
-                     0     1           1  |        1           2           1  |  2  |              0           1        |  2           2  |  1        |  3           2           2     
+					0     1           1  |        1           2           1  |  2  |              0           1        |  2           2  |  1        |  3           2           2     
 +     +     +     +     +     +  -  +     +  -  +  -  +  -  +  -  +  -  +     +     +  -  +  -  +     +  -  +  -  +  -  +     +     +     +     +     +  -  +  -  +  -  +  -  +  -  +  
-   0     0                 2  |     |        1     2                 3  |     |              2  |     |        1     1     1           2  |  1     0           2                 3  |  
+0     0                 2  |     |        1     2                 3  |     |              2  |     |        1     1     1           2  |  1     0           2                 3  |  
 +     +     +  -  +  -  +  -  +     +     +     +  -  +  -  +  -  +  -  +     +  -  +  -  +     +     +     +     +     +  -  +     +  -  +     +     +  -  +  -  +  -  +  -  +  -  +  
-         1  |        1              |        1  |  2           1           0              |     |     |        1     2  |  3  |     |        0     1  |        1     1           1     
+		1  |        1              |        1  |  2           1           0              |     |     |        1     2  |  3  |     |        0     1  |        1     1           1     
 +     +     +  -  +     +     +  -  +     +     +     +     +     +     +     +  -  +     +  -  +     +  -  +  -  +  -  +     +     +     +     +     +     +     +     +  -  +     +  
-   0              |        1  |        1        |  2                       1  |  3  |              1     1     1              |     |  1           1  |  2     1        |     |        
+0              |        1  |        1        |  2                       1  |  3  |              1     1     1              |     |  1           1  |  2     1        |     |        
 +     +  -  +     +  -  +     +  -  +  -  +     +  -  +     +  -  +     +     +     +  -  +  -  +  -  +     +     +     +     +     +     +  -  +     +  -  +  -  +  -  +     +     +  
-      |  3  |           |              2  |  2        |     |  3  |  1        |                    2  |  2           0        |     |  2  |  3  |  2                       2  |  1     
+	|  3  |           |              2  |  2        |     |  3  |  1        |                    2  |  2           0        |     |  2  |  3  |  2                       2  |  1     
 +     +     +  -  +     +     +     +     +  -  +  -  +     +     +     +     +  -  +  -  +  -  +     +  -  +  -  +     +  -  +     +     +     +  -  +  -  +  -  +     +  -  +     +  
-      |  1        |     |  1     1     1                    |     |  1           2     2        |        1        |  2  |        1  |     |  2     2           3  |     |  3           
+	|  1        |     |  1     1     1                    |     |  1           2     2        |        1        |  2  |        1  |     |  2     2           3  |     |  3           
 +     +     +     +     +     +  -  +  -  +  -  +  -  +     +     +     +  -  +  -  +  -  +     +     +     +     +     +     +     +     +  -  +  -  +     +  -  +     +  -  +     +  
-      |        1  |     |     |  2     1     2     2  |  3  |     |  2  |  3     2     2  |     |  1     1        |  2  |           |  1              |     |        0        |        
+	|        1  |     |     |  2     1     2     2  |  3  |     |  2  |  3     2     2  |     |  1     1        |  2  |           |  1              |     |        0        |        
 +     +     +     +     +  -  +     +     +  -  +     +  -  +     +     +  -  +  -  +     +  -  +     +  -  +  -  +     +  -  +     +     +     +     +     +  -  +     +     +  -  +  
-   2  |  1        |  2                    |  3  |                 |              3  |        1        |                       |  2  |  2     0        |  1        |              2  |  
+2  |  1        |  2                    |  3  |                 |              3  |        1        |                       |  2  |  2     0        |  1        |              2  |  
 +  -  +     +     +  -  +  -  +     +  -  +     +     +     +  -  +     +     +  -  +     +     +     +     +  -  +  -  +  -  +     +  -  +     +     +     +     +     +  -  +     +  
 |  3     1           2     2  |     |        2  |           |              1  |  3                    |     |  3                          |           |  2     1  |  2  |  3  |     |  
 +  -  +  -  +  -  +  -  +     +  -  +     +  -  +     +  -  +     +  -  +     +  -  +  -  +  -  +     +     +  -  +     +  -  +  -  +  -  +     +     +  -  +     +     +     +     +  
-         1           3  |                 |  3        |  3     2  |  3  |        1              |  2  |        3  |     |  3     1     1                    |     |     |     |  3  |  
+		1           3  |                 |  3        |  3     2  |  3  |        1              |  2  |        3  |     |  3     1     1                    |     |     |     |  3  |  
 +     +     +     +  -  +     +     +     +  -  +     +  -  +  -  +     +     +     +     +     +     +  -  +  -  +     +  -  +     +     +  -  +  -  +     +     +  -  +     +  -  +  
-                  |        0     0     0     2  |        1     1        |                    2  |  1                 1        |        1  |  2        |     |  1     2     0           
+				|        0     0     0     2  |        1     1        |                    2  |  1                 1        |        1  |  2        |     |  1     2     0           
 +     +  -  +     +     +     +     +     +     +  -  +     +     +  -  +     +  -  +  -  +  -  +     +  -  +  -  +  -  +  -  +     +     +     +     +     +     +  -  +     +     +  
-   1  |  3  |     |                          1        |  2     2  |  2        |  2           1        |  3                       0        |           |     |  3  |  3  |        0     
+1  |  3  |     |                          1        |  2     2  |  2        |  2           1        |  3                       0        |           |     |  3  |  3  |        0     
 +     +     +  -  +     +     +  -  +  -  +  -  +     +  -  +  -  +     +  -  +     +  -  +     +     +  -  +  -  +     +  -  +     +  -  +     +     +     +  -  +     +  -  +     +  
-   1  |        1     1        |              2  |  2                 1  |           |  3  |              1     2  |  3  |     |     |  3           1  |  2           0        |        
+1  |        1     1        |              2  |  2                 1  |           |  3  |              1     2  |  3  |     |     |  3           1  |  2           0        |        
 +     +     +     +  -  +     +  -  +  -  +     +  -  +  -  +  -  +     +  -  +  -  +     +     +  -  +     +     +  -  +     +     +  -  +     +     +  -  +     +     +     +     +  
-      |           |  3  |        2        |        1           3  |  1     1           1  |     |  3  |        1              |  1        |              3  |              1  |        
+	|           |  3  |        2        |        1           3  |  1     1           1  |     |  3  |        1              |  1        |              3  |              1  |        
 +  -  +     +  -  +     +  -  +  -  +     +  -  +     +  -  +  -  +     +     +     +     +  -  +     +  -  +  -  +     +     +     +     +  -  +     +  -  +     +  -  +     +     +  
 |  3        |  2     0     1     2  |           |  2  |        2     1     1                       1           3  |  1        |        1     3  |     |        2  |     |  3  |        
 +  -  +  -  +     +     +     +     +  -  +  -  +     +  -  +  -  +  -  +  -  +  -  +  -  +  -  +  -  +  -  +  -  +     +     +  -  +  -  +  -  +     +  -  +  -  +     +  -  +     +  

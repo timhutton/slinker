@@ -1,20 +1,20 @@
 /*
 	Slinker - Copyright (C) 2008 Tim Hutton, tim.hutton@gmail.com, http://www.sq3.org.uk
 
-    This file is part of Slinker.
+	This file is part of Slinker.
 
-    Slinker is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	Slinker is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    Slinker is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Slinker is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 // SlinkerGrid.cpp
@@ -507,7 +507,7 @@ bool SlinkerGrid::ApplyRules(const vector<TRule>& rules,vector<int*> &changed)
 }
 
 void SlinkerGrid::FollowPossibilities(const std::vector<TRule> &solving_rules, vector<SlinkerGrid> &solutions,
-									   bool guessing_allowed,unsigned int max_n_wanted_solutions)
+									bool guessing_allowed,unsigned int max_n_wanted_solutions)
 {
 	vector<int*> changed;
 
@@ -679,7 +679,7 @@ void SlinkerGrid::MakePuzzle()
 		if(entries.size()==n_original_entries)
 		{
 			// we've just hit on a rare case where even with all numbers there are no unique solutions.
-		 	// we just set this flag to try again
+			// we just set this flag to try again
 			no_unique_solutions = true;
 		}
 		else
@@ -716,13 +716,13 @@ void SlinkerGrid::FindNewRules() // static
 	// apart from missing certain (rare?) rules that need a depth of recursion, eg:
 	
 	/*         +   +   +   +           +   +   +   +
-	                 2                       2
-	           +   +   + x +    =>     + - +   + x +
-	               x   x                   x   x
-	           +   +   +               +   +   +
-	           
-	       Trying a 'x' in that place does not immediately lead to contradiction, hence this isn't spotted as a rule. Here 
-	       we would need approach 2.
+					2                       2
+			+   +   + x +    =>     + - +   + x +
+				x   x                   x   x
+			+   +   +               +   +   +
+			
+		Trying a 'x' in that place does not immediately lead to contradiction, hence this isn't spotted as a rule. Here 
+		we would need approach 2.
 	*/
 	
 	// approach 2: recurse down all (or depth R) possibilities for the local area. if a border has the same on/off state in 
