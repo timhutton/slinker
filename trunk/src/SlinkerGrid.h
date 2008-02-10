@@ -17,8 +17,6 @@
 	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// SlinkerGrid.h
-
 #include <vector>
 #include <string>
 
@@ -42,15 +40,15 @@ class SlinkerGrid
 		/// an element is a value in an x,y location - used in rules
 		struct TElement
 		{
-			int x,y; // a location on the grid (here a relative location)
-			int val; // the value in that location
+			int x,y; ///< a location on the grid (here a relative location)
+			int val; ///< the value in that location
 			TElement ( int xp,int yp,int value ) : x ( xp ),y ( yp ),val ( value ) {}
 		};
 		/// a rule says that if certain conditions are met, certain things must be true
 		struct TRule
 		{
-			std::vector<TElement> required; // if these elements are present...
-			std::vector<TElement> implied;  //   ...then these elements can be set
+			std::vector<TElement> required; ///< if these elements are present...
+			std::vector<TElement> implied;  ///<   ...then these elements can be set
 		};
 
 	public: // public methods
@@ -71,15 +69,16 @@ class SlinkerGrid
 		/// read/write cell value - valid range from (0,0) to (width-1,height-1) inclusive
 		int& cellValue ( int x,int y );
 
-		/// read/write border/cell value - valid range from (0,0) to (2*width,2*height) inclusive where
+		/// read/write border/cell value - valid range from (0,0) to (2*width,2*height) inclusive
 		/** the grid is stored in the following way:
-
+				\verbatim
 					   0 1 2 3 4 5 6
 					0  + - +   +   +
 					1  | 3 |
-					2  +   + - +   +    this is a 3x2 grid, stored in a 7x5 array
+					2  +   + - +   +    This is a 3x2 grid, stored in a 7x5 array.
 					3  |       |
 					4  + - + - +   +
+				\endverbatim
 
 			For cell entries (e.g. 1,1): value is 0,1,2,3 or UNKNOWN (shown blank).
 			For border entries (eg. 1,0): value is 0,1 for off/on, or UNKNOWN.
@@ -92,6 +91,7 @@ class SlinkerGrid
 		///  Given a set of numbers entered into the grid, return the solutions (if any).
 		/**  Will use the grid as-is - set all borders to UNKNOWN if you just want to find solutions given the numbers.
 		*    @param guessing_allowed if false then only those solutions that can be found through simple rules are found; if true then recursion is also used to explore pathways
+		*    @param max_n_wanted_solutions set this to limit the number of solutions that are needed - e.g. 2 if you want to know  whether multiple solutions exist, or 1 if you know a solution exists.
 		*    @return the unique solutions that were found for the puzzle
 		*/
 		std::vector<SlinkerGrid> FindSolutions ( bool guessing_allowed,int max_n_wanted_solutions );
@@ -114,11 +114,14 @@ class SlinkerGrid
 		/// checks whether the (sub-)grid is in a plausible state, or has contradictions with the solving rules
 		/** note that this function ignores edge borders and considers loops illegal and so is not for
 			evaluating puzzles, just sub-grid rule-candidates (see FindNewRules)
+			@param solving_rules the rules that will be used to check consistency
+			@param SEARCH_BORDER this many entries around the edge are ignored 
 			@param depth if zero then just applies local rules, else recurses down onto possibilities depth times
 			@return returns whether a contradiction was found (false) or not (true)
 		*/
-		bool IsConsistent ( const std::vector<TRule> &solving_rules,const int& SEARCH_BORDER,int depth );
+		bool IsConsistent ( const std::vector<TRule> &solving_rules,const int& SEARCH_BORDER,int depth);
 
+		/// Loopy has a simple format for puzzles, e.g. "4x4:a33a12032f3"
 		static SlinkerGrid ReadFromLoopyFormat ( const std::string &string );
 		std::string GetPuzzleInLoopyFormat();
 

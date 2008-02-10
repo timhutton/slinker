@@ -17,157 +17,29 @@
 	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "wxWidgets_standard_headers.h"
-
-#include <fstream>
-#include <sstream>
-#include <algorithm>
-using namespace std;
-
-#include <stdlib.h>
-
+#include "MainFrame.h"
+#include "IDs.h"
 #include "SlinkerGrid.h"
 
-// ----------------------------------------------------------------------------
-// private classes
-// ----------------------------------------------------------------------------
-
-// Define a new application type, each program should derive a class from wxApp
-class MyApp : public wxApp
-{
-public:
-	// override base class virtuals
-	// ----------------------------
-
-	// this one is called on application startup and is a good place for the app
-	// initialization (doing it here and not in the ctor allows to have an error
-	// return: if OnInit() returns false, the application terminates)
-	virtual bool OnInit();
-
-	virtual int OnRun();
-};
-
-// Define a new frame type: this is going to be our main frame
-class MyFrame : public wxFrame
-{
-public:
-	// ctor(s)
-	MyFrame(const wxString& title);
-
-	// event handlers (these functions should _not_ be virtual)
-	void OnQuit(wxCommandEvent& event);
-	void OnAbout(wxCommandEvent& event);
-
-	void OnSearchForSolutions(wxCommandEvent& event);
-	void OnSearchForPuzzles(wxCommandEvent& event);
-	void OnSearchForNewRules(wxCommandEvent& event);
-	
-	void OnTestLoopyFormat(wxCommandEvent& event);
-
-private:
-	// any class wishing to process wxWidgets events must use this macro
-	DECLARE_EVENT_TABLE()
-};
-
-// ----------------------------------------------------------------------------
-// constants
-// ----------------------------------------------------------------------------
-
-// IDs for the controls and the menu commands
-enum 
-{
-	// menu items
-	Minimal_Quit = wxID_EXIT,
-	
-	// it is important for the id corresponding to the "About" command to have
-	// this standard value as otherwise it won't be handled properly under Mac
-	// (where it is special and put into the "Apple" menu)
-	Minimal_About = wxID_ABOUT,
-
-	SearchForSolutions,
-	SearchForPuzzles,
-	SearchForNewRules,
-	TestLoopyFormat
-};
-
-
-// ----------------------------------------------------------------------------
-// event tables and other macros for wxWidgets
-// ----------------------------------------------------------------------------
+#include <vector>
+#include <fstream>
+#include <sstream>
+using namespace std;
 
 // the event tables connect the wxWidgets events with the functions (event
 // handlers) which process them. It can be also done at run-time, but for the
 // simple menu events like this the static method is much simpler.
-BEGIN_EVENT_TABLE(MyFrame, wxFrame)
-	EVT_MENU(Minimal_Quit,  MyFrame::OnQuit)
-	EVT_MENU(Minimal_About, MyFrame::OnAbout)
+BEGIN_EVENT_TABLE(MainFrame, wxFrame)
+	EVT_MENU(ID::Minimal_Quit,  MainFrame::OnQuit)
+	EVT_MENU(ID::Minimal_About, MainFrame::OnAbout)
 
-	EVT_MENU(SearchForSolutions, MyFrame::OnSearchForSolutions)
-	EVT_MENU(SearchForPuzzles, MyFrame::OnSearchForPuzzles)
-	EVT_MENU(SearchForNewRules, MyFrame::OnSearchForNewRules)
-	EVT_MENU(TestLoopyFormat, MyFrame::OnTestLoopyFormat)
+	EVT_MENU(ID::SearchForSolutions, MainFrame::OnSearchForSolutions)
+	EVT_MENU(ID::SearchForPuzzles, MainFrame::OnSearchForPuzzles)
+	EVT_MENU(ID::SearchForNewRules, MainFrame::OnSearchForNewRules)
+	EVT_MENU(ID::TestLoopyFormat, MainFrame::OnTestLoopyFormat)
 END_EVENT_TABLE()
 
-// Create a new application object: this macro will allow wxWidgets to create
-// the application object during program execution (it's better than using a
-// static object for many reasons) and also implements the accessor function
-// wxGetApp() which will return the reference of the right type (i.e. MyApp and
-// not wxApp)
-IMPLEMENT_APP(MyApp)
-
-// ============================================================================
-// implementation
-// ============================================================================
-
-// ----------------------------------------------------------------------------
-// the application class
-// ----------------------------------------------------------------------------
-
-// 'Main program' equivalent: the program execution "starts" here
-bool MyApp::OnInit()
-{
-	// call the base class initialization method, currently it only parses a
-	// few common command-line options but it could be do more in the future
-	if ( !wxApp::OnInit() )
-		return false;
-
-	// create the main application window
-	MyFrame *frame = new MyFrame(_T("Slinker"));
-
-	// and show it (the frames, unlike simple controls, are not shown when
-	// created initially)
-	frame->Show(true);
-
-	// success: wxApp::OnRun() will be called which will enter the main message
-	// loop and the application will run. If we returned false here, the
-	// application would exit immediately.
-	return true;
-}
-
-int MyApp::OnRun()
-{
-	srand((unsigned int)time(NULL));
-	try { return wxApp::OnRun(); }
-	catch(exception &e)
-	{
-		wxMessageBox(wxString(e.what(),wxConvUTF8),
-			wxT("Exception thrown:"),
-			wxICON_EXCLAMATION);
-		return -1;
-	}
-	catch(...)
-	{
-		// some other error thrown... :(
-		return -1;
-	}
-}
-
-// ----------------------------------------------------------------------------
-// main frame
-// ----------------------------------------------------------------------------
-
-// frame constructor
-MyFrame::MyFrame(const wxString& title)
+MainFrame::MainFrame(const wxString& title)
 	: wxFrame(NULL, wxID_ANY, title)
 {
 #if wxUSE_MENUS
@@ -175,16 +47,16 @@ MyFrame::MyFrame(const wxString& title)
 	wxMenu *fileMenu = new wxMenu;
 
 	wxMenu *actionsMenu = new wxMenu;
-	actionsMenu->Append(SearchForSolutions,_T("Search for solutions.."),_T("Searches for solutions"));
-	actionsMenu->Append(SearchForPuzzles,_T("Search for puzzles.."),_T("Searches for puzzles with unique solutions"));
-	actionsMenu->Append(SearchForNewRules,_T("Search for new rules.."),_T("Given the existing rules, searches for more complex ones"));
-	actionsMenu->Append(TestLoopyFormat,_T("Test the Loopy format code..."),_T(""));
+	actionsMenu->Append(ID::SearchForSolutions,_T("Search for solutions.."),_T("Searches for solutions"));
+	actionsMenu->Append(ID::SearchForPuzzles,_T("Search for puzzles.."),_T("Searches for puzzles with unique solutions"));
+	actionsMenu->Append(ID::SearchForNewRules,_T("Search for new rules.."),_T("Given the existing rules, searches for more complex ones"));
+	actionsMenu->Append(ID::TestLoopyFormat,_T("Test the Loopy format code..."),_T(""));
 
 	// the "About" item should be in the help menu
 	wxMenu *helpMenu = new wxMenu;
-	helpMenu->Append(Minimal_About, _T("&About...\tF1"), _T("Show about dialog"));
+	helpMenu->Append(ID::Minimal_About, _T("&About...\tF1"), _T("Show about dialog"));
 
-	fileMenu->Append(Minimal_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
+	fileMenu->Append(ID::Minimal_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
 
 	// now append the freshly created menu to the menu bar...
 	wxMenuBar *menuBar = new wxMenuBar();
@@ -205,13 +77,13 @@ MyFrame::MyFrame(const wxString& title)
 
 // event handlers
 
-void MyFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
+void MainFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
 	// true is to force the frame to close
 	Close(true);
 }
 
-void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
+void MainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
 	wxMessageBox(wxString::Format(
 					_T("Uses: %s\n")
@@ -350,7 +222,7 @@ A 30x30 grid that the computer can solve by just applying rules: (otherwise loca
 
 */
 
-void MyFrame::OnSearchForSolutions(wxCommandEvent &event)
+void MainFrame::OnSearchForSolutions(wxCommandEvent &event)
 {
 	wxBusyCursor busy;
 
@@ -466,7 +338,7 @@ void MyFrame::OnSearchForSolutions(wxCommandEvent &event)
 	}
 }
 
-void MyFrame::OnSearchForPuzzles(wxCommandEvent &event)
+void MainFrame::OnSearchForPuzzles(wxCommandEvent &event)
 {
 	wxBusyCursor b;
 	SlinkerGrid g(10,10);
@@ -477,13 +349,13 @@ void MyFrame::OnSearchForPuzzles(wxCommandEvent &event)
 	wxMessageBox(wxString((loopy+"\n\n(also saved to loopy.txt)").c_str(),wxConvUTF8));
 }
 
-void MyFrame::OnSearchForNewRules(wxCommandEvent &event)
+void MainFrame::OnSearchForNewRules(wxCommandEvent &event)
 {
 	wxBusyCursor b;
 	SlinkerGrid::FindNewRules();
 }
 
-void MyFrame::OnTestLoopyFormat(wxCommandEvent& event)
+void MainFrame::OnTestLoopyFormat(wxCommandEvent& event)
 {
 	//SlinkerGrid g = SlinkerGrid::ReadFromLoopyFormat("40x30:23b3a202a33b2a3a2b3a3a3b13a333a2b21b3a1d0b22c23b21c21b1d2a3d2d131102b2h2b103131d2b22a2a2g210a211222a111g1a2a212a2a1121a2b21a012d101a13b1a1112a1a3a222b23f20b2b1b03f11b312c11b3a1a323c31a22a23c311a2a1b32b3b12e20a21c1b3c01a13e22b1a11b222g01b21b33g120b31a33a12a23312a21a2312222122a32a21213a22a23c13a2b2a23f12f11a1b2a21c22c1a2a22c31a0d3a31c00a1a2c22a2a1b12a3a21c01222012c21a1a22b2a3b1a2e1b3a2b1d2b3a3b3e1a2b1a223231a3b0b2b23b1b1b1a211131a2b3a132223a2b2b0b01b2b3b1a101232a2b2a1e0b1a2b3d2b2a2b2e2a1b3a2b13a1a12c13131212c33a1a33b1a2a31c3a3a33c12a3d2a11c10a1a1c21c11a1b2a12f32f23a3b1a22c32a21a12032a22a1131213232a31a22110a22a12a21b212g22b23b21g232b12a2b22e23a32c2b1c11a10e32b2b22b2a1a020c22a20a11c121a3a2b23c222b22f13b1b3b22f01b222a2a2a1213a1b31a132d322a21b3a1220a1a231a2a2g011a112112a222g1a1a32b3d322223b2h0b323313d2d1a3d3b22c20b21c12b2d2a3b22b3a123a13b2a2a2b3a3a1b22a012a2b12");
 	SlinkerGrid g = SlinkerGrid::ReadFromLoopyFormat("10x10:1a1a3a13a1b212g1e3b1c212d1c2a2131a11i13b021b3a3a31c1a1a21a23c32c2");
