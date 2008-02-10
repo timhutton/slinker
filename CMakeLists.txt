@@ -4,10 +4,15 @@ PROJECT (Slinker)
 # include the source files that make up the project itself:
 
 SET(SRCS_Slinker
-  src/main.cpp
+  src/App.cpp
+  src/App.h
+  src/MainFrame.cpp
+  src/MainFrame.h
   src/SlinkerGrid.cpp
   src/SlinkerGrid.h
+  src/IDs.h
   src/next_combination.h
+  src/wxWidgets_standard_headers.h
   )
 
 #-----------------------------------------------------------------------------

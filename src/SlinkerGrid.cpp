@@ -17,20 +17,21 @@
 	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// SlinkerGrid.cpp
-
-#include "next_combination.h"
-
 #include "SlinkerGrid.h"
+#include "next_combination.h"
 
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <fstream>
 using namespace std;
 
-// for debugging
-#include <fstream>
+// some things for random number generation
+#include <stdlib.h>
+#include <time.h>
 
+// if you want to use SlinkerGrid with your own interface then you can remove all wxWidgets specific things, including
+// this include and all calls to wxLogStatus and wxMessageBox.
 #include "wxWidgets_standard_headers.h"
 
 /// ---------- statics -------------
@@ -63,11 +64,13 @@ SlinkerGrid::SlinkerGrid(int x,int y,TGridShape gs)
 	cells(2*X+1,vector<int>(2*Y+1,UNKNOWN)), // init array of values all filled with UNKNOWN
 	grid_shape(gs)
 {
+	srand((unsigned int)time(NULL));
 }
 
 SlinkerGrid::SlinkerGrid(const SlinkerGrid& g)
 	: X(g.X),Y(g.Y),cells(g.cells),grid_shape(g.grid_shape)
 {
+	srand((unsigned int)time(NULL));
 }
 
 SlinkerGrid& SlinkerGrid::operator=(const SlinkerGrid& g)
