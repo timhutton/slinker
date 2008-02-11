@@ -17,6 +17,8 @@
 	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "SlinkerGrid.h"
+
 #include "wxWidgets_standard_headers.h"
 
 /// the main window of the application
@@ -32,11 +34,15 @@ public:
 	void OnSearchForSolutions(wxCommandEvent& event);
 	void OnSearchForPuzzles(wxCommandEvent& event);
 	void OnSearchForNewRules(wxCommandEvent& event);
+	void OnPaint(wxPaintEvent& event);
 	
 	/// debug
 	void OnTestLoopyFormat(wxCommandEvent& event);
 
 private:
+
+	/// the grid that is drawn on the screen and solved by the user
+	SlinkerGrid main_grid;
 
 	// any class wishing to process wxWidgets events must use this macro
 	DECLARE_EVENT_TABLE()

@@ -261,7 +261,21 @@ int& SlinkerGrid::cellValue(int x,int y)
 	return this->cells[2*x+1][2*y+1];
 }
 
+const int& SlinkerGrid::cellValue(int x,int y) const
+{
+	if(x<0 || x>=X || y<0 || y>=Y)
+		throw(out_of_range("out of range exception in SlinkerGrid::cellValue"));
+	return this->cells[2*x+1][2*y+1];
+}
+
 int& SlinkerGrid::gridValue(int x,int y)
+{
+	if(!IsOnGrid(x,y))
+		throw(out_of_range("out of range exception in SlinkerGrid::gridValue"));
+	return this->cells[x][y];
+}
+
+const int& SlinkerGrid::gridValue(int x,int y) const
 {
 	if(!IsOnGrid(x,y))
 		throw(out_of_range("out of range exception in SlinkerGrid::gridValue"));
@@ -386,7 +400,7 @@ void SlinkerGrid::FillGridWithRandomLoop()
 
 	// search at random for possible applications of these rules, until bored
 	int its=0;
-	while(++its<X*Y*1000) // there might be a more elegant method than just running for a while, but it works quickly and well
+	while(++its<X*Y*500) // there might be a more elegant method than just running for a while, but it works quickly and well
 	{
 		// look in a random cell at a random orientation, for a random rule
 		x = 2*(rand()%X) + 1;

@@ -19,7 +19,6 @@
 
 #include "MainFrame.h"
 #include "IDs.h"
-#include "SlinkerGrid.h"
 
 #include <vector>
 #include <fstream>
@@ -32,6 +31,7 @@ using namespace std;
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	EVT_MENU(ID::Minimal_Quit,  MainFrame::OnQuit)
 	EVT_MENU(ID::Minimal_About, MainFrame::OnAbout)
+	EVT_PAINT( MainFrame::OnPaint)
 
 	EVT_MENU(ID::SearchForSolutions, MainFrame::OnSearchForSolutions)
 	EVT_MENU(ID::SearchForPuzzles, MainFrame::OnSearchForPuzzles)
@@ -40,7 +40,8 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 END_EVENT_TABLE()
 
 MainFrame::MainFrame(const wxString& title)
-	: wxFrame(NULL, wxID_ANY, title)
+	: wxFrame(NULL, wxID_ANY, title),
+	  main_grid(20,14)
 {
 #if wxUSE_MENUS
 	// create a menu bar
@@ -72,6 +73,8 @@ MainFrame::MainFrame(const wxString& title)
 	// create a status bar just for fun (by default with 1 pane only)
 	CreateStatusBar(1);
 #endif // wxUSE_STATUSBAR
+
+	this->main_grid.FillGridWithRandomLoop();
 }
 
 
@@ -372,3 +375,108 @@ void MainFrame::OnTestLoopyFormat(wxCommandEvent& event)
 		wxMessageBox(wxT("Failed to find a solution."));
 	
 }
+
+void DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
+{
+	const int BORDER = 10;
+	const int X = g.GetX();
+	const int Y = g.GetY();
+	int cell_size = min((dc.GetSize().x-BORDER*2)/X,(dc.GetSize().y-BORDER*2)/Y);
+	wxPoint origin(dc.GetSize().x/2 - (cell_size * X)/2,
+		dc.GetSize().y/2 - (cell_size * Y)/2);
+	// blank the area
+	dc.SetPen(*wxWHITE_PEN);
+	dc.SetBrush(*wxWHITE_BRUSH);
+	dc.DrawRectangle(0,0,dc.GetSize().x,dc.GetSize().y);
+	// draw the grid in light grey
+	dc.SetPen(wxPen(wxColour(240,240,240)));
+	int x,y;
+	for(x=0;x<=X;x++)
+	{
+		dc.DrawLine(origin.x + cell_size*x,
+			origin.y,
+			origin.x + cell_size*x,
+			dc.GetSize().y/2 + cell_size * Y/2+1);
+	}
+	for(y=0;y<=Y;y++)
+	{
+		dc.DrawLine(origin.x,
+			origin.y + cell_size*y,
+			dc.GetSize().x/2 + cell_size * X/2+1,
+			origin.y + cell_size*y);
+	}
+	// draw the borders
+	int line_thickness = 1;//+3*int(cell_size/30); // want odd numbers
+	wxColour col = wxColour(0,0,160);
+	wxColour col2 = wxColour(128,128,208); // highlight
+	dc.SetPen(wxPen(col,line_thickness));
+	for(x=0;x<2*X+1;x++)
+	{
+		for(y=0;y<2*Y+1;y++)
+		{
+			if(g.IsBorder(x,y) && g.gridValue(x,y)==1)
+			{
+				if(g.IsHorizontalBorder(x,y))
+				{
+					int sx = (x-1)/2;
+					int sy = y/2;
+					if(line_thickness<=1)
+						dc.DrawLine(origin.x+sx*cell_size,origin.y+sy*cell_size,origin.x+(sx+1)*cell_size+1,origin.y+sy*cell_size);
+					else
+					{
+						dc.GradientFillLinear(wxRect(origin.x+sx*cell_size,origin.y+sy*cell_size-line_thickness/2,cell_size,2),col,col2,wxSOUTH);
+						dc.GradientFillLinear(wxRect(origin.x+sx*cell_size,origin.y+sy*cell_size-line_thickness/2+2,cell_size,line_thickness-2),col2,col,wxSOUTH);
+					}
+				}
+				else
+				{
+					int sx = x/2;
+					int sy = (y-1)/2;
+					if(line_thickness<=1)
+						dc.DrawLine(origin.x+sx*cell_size,origin.y+sy*cell_size,origin.x+sx*cell_size,origin.y+(sy+1)*cell_size+1);
+					else
+					{
+						dc.GradientFillLinear(wxRect(origin.x+sx*cell_size-line_thickness/2,origin.y+sy*cell_size,2,cell_size),col,col2,wxEAST);
+						dc.GradientFillLinear(wxRect(origin.x+sx*cell_size-line_thickness/2+2,origin.y+sy*cell_size,line_thickness-2,cell_size),col2,col,wxEAST);
+					}
+				}
+			}
+		}
+	}
+	// draw the dots
+	int radius = line_thickness;
+	if(radius>1)
+	{
+		dc.SetPen(wxPen(col,1));
+		dc.SetBrush(wxBrush(col));
+		for(x=0;x<=X;x++)
+		{
+			for(y=0;y<=Y;y++)
+			{
+				dc.DrawRectangle(origin.x+cell_size*x-radius,origin.y+cell_size*y-radius,radius*2,radius*2);
+			}
+		}
+	}
+	dc.SetPen(wxNullPen);
+	// draw cells entries
+	for(x=0;x<X;x++)
+	{
+		for(y=0;y<Y;y++)
+		{
+			if(g.cellValue(x,y)!=SlinkerGrid::UNKNOWN)
+			{
+				char c = '0'+g.cellValue(x,y);
+				wxString str(&c,wxConvUTF8,1);
+				wxSize s = dc.GetTextExtent(str);
+				dc.DrawText(str,origin.x+cell_size*(x+0.5)-s.x/2,origin.y+cell_size*(y+0.5)-s.y/2);
+			}
+		}
+	}
+}
+
+void MainFrame::OnPaint(wxPaintEvent &event)
+{
+	wxPaintDC dc(this);
+	DrawGrid(this->main_grid,dc);
+}
+
