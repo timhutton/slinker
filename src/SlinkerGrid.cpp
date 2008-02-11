@@ -375,24 +375,12 @@ void SlinkerGrid::FillGridWithRandomLoop()
 {
 	// method: starting with a 1-cell loop, expand using growth rules at random until satisfied
 	// (the rules maintain the single loop property without having to search for it)
-	vector<TRule> growth_rules;
-	ReadRulesFromFile("growth_rules.txt",growth_rules);
 
-	int x,y,tx,ty,iSymm,iRule;
-	bool can_apply;
-	vector<TElement>::const_iterator it;
-	// start with a grid full of offs
-	this->Clear();
-	this->MarkUnknownBordersAsOff();
-	// start with a single cell loop
-	do {
-		x = 2*(rand()%X) + 1;
-		y = 2*(rand()%Y) + 1;
-	} while(!IsOnGrid(x,y)); // (need this test for non-rectangular grids)
-	this->cells[x-1][y]=this->cells[x+1][y]=this->cells[x][y-1]=this->cells[x][y+1]=1;
+	InitGridWithSeedLoop();
 
+	vector<TRule> growth_rules = GetGrowthRules();
+	
 	// here's a nice feature - you can choose what the loop should feel like:
-
 	// (over 0,100 what proportions do you want the three rules in?)
 	//const int prob_divs[2]={50,100}; // just use first two rules; for thin corridors, maximally-filled grid (usually unsatisfactory since predictable)
 	//const int prob_divs[2]={33,66}; // for thick corridors, casually-filled grid (can leave empty areas but perhaps least predictable, and may be to your taste)
@@ -400,16 +388,50 @@ void SlinkerGrid::FillGridWithRandomLoop()
 
 	// search at random for possible applications of these rules, until bored
 	int its=0;
-	while(++its<X*Y*500) // there might be a more elegant method than just running for a while, but it works quickly and well
+	while(++its<X*Y*20) // there might be a more elegant method than just running for a while, but it works well and quickly enough
+		GrowLoop(growth_rules,prob_divs);
+
+	// fill in the cell counts
+	int minc,maxc,x,y;
+	for(x=0;x<X;x++)
 	{
-		// look in a random cell at a random orientation, for a random rule
+		for(y=0;y<Y;y++)
+		{
+			GetBorderCountAroundCell(x*2+1,y*2+1,minc,maxc);
+			cellValue(x,y) = minc;
+		}
+	}
+}
+
+void SlinkerGrid::InitGridWithSeedLoop()
+{
+	// start with a grid full of offs
+	this->Clear();
+	this->MarkUnknownBordersAsOff();
+	// start with a single cell loop
+	int x,y;
+	do {
 		x = 2*(rand()%X) + 1;
 		y = 2*(rand()%Y) + 1;
-		iSymm = rand()%N_SYMMETRIES;
+	} while(!IsOnGrid(x,y)); // (need this test for non-rectangular grids)
+	this->cells[x-1][y]=this->cells[x+1][y]=this->cells[x][y-1]=this->cells[x][y+1]=1;
+}
+
+bool SlinkerGrid::GrowLoop(const vector<TRule>& growth_rules,const int* prob_divs)
+{
+	// look in a random cell at a random orientation, for a random rule
+	int n_tries=0;
+	while(n_tries++<1000)
+	{
+		int x = 2*(rand()%X) + 1;
+		int y = 2*(rand()%Y) + 1;
+		int tx,ty;
+		int iSymm = rand()%N_SYMMETRIES;
 		int rand_p = rand()%100;
-		iRule = (rand_p<prob_divs[0])?0:((rand_p<prob_divs[1])?1:2);
+		int iRule = (rand_p<prob_divs[0])?0:((rand_p<prob_divs[1])?1:2);
 		// can this rule apply?
-		can_apply = true;
+		bool can_apply = true;
+		vector<TElement>::const_iterator it;
 		for(it=growth_rules[iRule].required.begin();it!=growth_rules[iRule].required.end() && can_apply;it++)
 		{
 			tx = x + SYMMETRIES[iSymm].mX(it->x,it->y);
@@ -435,22 +457,13 @@ void SlinkerGrid::FillGridWithRandomLoop()
 				if(IsOnGrid(tx,ty) && cells[tx][ty] != it->val)
 					cells[tx][ty] = it->val;
 			}
+			return true;
 		}
 		// N.B. this is not quite the same search as ApplyRules()  - we don't worry about inconsistency, 
 		// and we must search at random, and while we still treat off-grid borders as equivalent to off borders, 
 		// we also have to check that we're not trying to set an off-grid border to on.
 	}
-
-	// fill in the cell counts
-	int minc,maxc;
-	for(x=0;x<X;x++)
-	{
-		for(y=0;y<Y;y++)
-		{
-			GetBorderCountAroundCell(x*2+1,y*2+1,minc,maxc);
-			cellValue(x,y) = minc;
-		}
-	}
+	return false;
 }
 
 void SlinkerGrid::Clear()
@@ -1398,4 +1411,89 @@ string SlinkerGrid::GetPuzzleInLoopyFormat()
 	if(n_spaces_pending>0)
 		oss << char('a'+n_spaces_pending-1);
 	return oss.str();
+}
+
+vector<SlinkerGrid::TRule> SlinkerGrid::GetGrowthRules()
+{
+	vector<TRule> rules;
+	{
+		TRule a;
+		a.required.push_back(TElement(1,0,1));
+		a.required.push_back(TElement(0,1,1));
+		a.required.push_back(TElement(-1,0,0));
+		a.required.push_back(TElement(0,-1,0));
+		a.required.push_back(TElement(-2,-1,0));
+		a.required.push_back(TElement(-1,-2,0));
+		a.implied.push_back(TElement(1,0,0));
+		a.implied.push_back(TElement(0,1,0));
+		a.implied.push_back(TElement(-1,0,1));
+		a.implied.push_back(TElement(0,-1,1));
+		/*
+		#         +     +     +     +     +     +                    +     +     +     +     +     +  
+		#                                                                                             
+		#         +     +     +     +     +     +                    +     +     +     +     +     +  
+		#                     x                                                  x                    
+		#         +     +  x  +  x  +     +     +                    +     +  x  +  -  +     +     +  
+		#                     x     |                     =>                     |     x              
+		#         +     +     +  -  +     +     +                    +     +     +  x  +     +     +  
+		#                                                                                             
+		#         +     +     +     +     +     +                    +     +     +     +     +     +  
+		#                                                                                             
+		#         +     +     +     +     +     +                    +     +     +     +     +     +  
+		*/
+		rules.push_back(a);
+	}
+	{
+		TRule a;
+		a.required.push_back(TElement(-1,0,1));
+		a.required.push_back(TElement(1,0,0));
+		a.required.push_back(TElement(0,-1,0));
+		a.required.push_back(TElement(0,1,0));
+		a.required.push_back(TElement(1,-2,0));
+		a.required.push_back(TElement(1,2,0));
+		a.required.push_back(TElement(2,-1,0));
+		a.required.push_back(TElement(2,1,0));
+		a.implied.push_back(TElement(-1,0,0));
+		a.implied.push_back(TElement(1,0,1));
+		a.implied.push_back(TElement(0,-1,1));
+		a.implied.push_back(TElement(0,1,1));
+		/*
+		#         +     +     +     +     +     +                    +     +     +     +     +     +  
+		#                                                                                             
+		#         +     +     +     +     +     +                    +     +     +     +     +     +  
+		#                     x                                                  x                    
+		#         +     +  x  +  x  +     +     +                    +     +  -  +  x  +     +     +  
+		#               |     x                           =>               x     |                    
+		#         +     +  x  +  x  +     +     +                    +     +  -  +  x  +     +     +  
+		#                     x                                                  x                    
+		#         +     +     +     +     +     +                    +     +     +     +     +     +  
+		#                                                                                             
+		#         +     +     +     +     +     +                    +     +     +     +     +     +  
+		*/
+		rules.push_back(a);
+	}
+	{
+		TRule a;
+		a.required.push_back(TElement(0,1,1));
+		a.required.push_back(TElement(1,0,1));
+		a.required.push_back(TElement(0,-1,1));
+		a.required.push_back(TElement(-1,0,0));
+		a.implied.push_back(TElement(-1,0,1));
+		a.implied.push_back(TElement(1,0,0));
+		a.implied.push_back(TElement(0,-1,0));
+		a.implied.push_back(TElement(0,1,0));
+		/*
+		#         +     +     +     +     +                    +     +     +     +     +  
+		#                                                                                 
+		#         +     +  -  +     +     +                    +     +  x  +     +     +  
+		#               x     |                                      |     x              
+		#         +     +  -  +     +     +         =>         +     +  x  +     +     +  
+		#                                                                                 
+		#         +     +     +     +     +                    +     +     +     +     +  
+		#                                                                                 
+		#         +     +     +     +     +                    +     +     +     +     +  
+		*/
+		rules.push_back(a);
+	}
+	return rules;
 }

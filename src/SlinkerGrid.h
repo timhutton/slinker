@@ -139,6 +139,19 @@ class SlinkerGrid
 		/// given an empty grid, generate a long wiggly loop line
 		void FillGridWithRandomLoop();
 
+		/// return the usual 3 rules we use to grow a seed loop into a random convoluted loop for making a puzzle
+		static std::vector<TRule> GetGrowthRules();
+		
+		/// for making a loop: clear the grid and create a single-cell loop in a random place
+		void InitGridWithSeedLoop();
+		
+		/// apply one of the growth rules to the grid, with a probability specified by the divisions
+		/** @param growth_rules the growth rules to be applied, specifying on and off borders
+			@param prob_divs [growth_rules.size()-1] of the divisions between 1 and 100 such that a linear random sample will choose a larger segment more often
+			@return true if could apply one of the rules in reasonable time, else false
+		*/
+		bool GrowLoop(const std::vector<TRule>& growth_rules,const int* prob_divs);
+		
 		/// helper functions to identify where in the grid we are
 		static bool IsOdd ( int a );
 		static bool IsEven ( int a );
