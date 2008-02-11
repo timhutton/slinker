@@ -65,9 +65,16 @@ class SlinkerGrid
 
 		/// equality operator checks whether two grids have the same size, shape and entries
 		bool operator== ( const SlinkerGrid& g ) const;
+		
+		/// retrieve the width of the grid
+		int GetX() const { return X; }
+		/// retrieve the height of the grid
+		int GetY() const { return Y; }
 
 		/// read/write cell value - valid range from (0,0) to (width-1,height-1) inclusive
 		int& cellValue ( int x,int y );
+		/// read/write cell value - valid range from (0,0) to (width-1,height-1) inclusive
+		const int& cellValue ( int x,int y ) const;
 
 		/// read/write border/cell value - valid range from (0,0) to (2*width,2*height) inclusive
 		/** the grid is stored in the following way:
@@ -84,6 +91,7 @@ class SlinkerGrid
 			For border entries (eg. 1,0): value is 0,1 for off/on, or UNKNOWN.
 			Dot ('+') entries are ignored.														*/
 		int& gridValue ( int x,int y );
+		const int& gridValue ( int x,int y ) const;
 
 		/// retrieve a string representation of the grid, with newlines, for easy printing
 		std::string GetPrintOut() const;
@@ -128,6 +136,18 @@ class SlinkerGrid
 		/// for nicer printing: set all off borders to UNKNOWN, which prints as a blank
 		void MarkOffBordersAsUnknown();
 
+		/// given an empty grid, generate a long wiggly loop line
+		void FillGridWithRandomLoop();
+
+		/// helper functions to identify where in the grid we are
+		static bool IsOdd ( int a );
+		static bool IsEven ( int a );
+		static bool IsDot ( int x,int y );
+		static bool IsBorder ( int x,int y );
+		static bool IsCell ( int x,int y );
+		static bool IsHorizontalBorder ( int x,int y );
+		static bool IsVerticalBorder ( int x,int y );
+
 	private: // private classes
 
 		/// a 2x2 integer matrix for reflections and quarter rotations
@@ -166,15 +186,6 @@ class SlinkerGrid
 		/// are the grid coordinates supplied valid?
 		bool IsOnGrid ( int x,int y ) const;
 
-		/// helper functions to identify where in the grid we are
-		static bool IsOdd ( int a );
-		static bool IsEven ( int a );
-		static bool IsDot ( int x,int y );
-		static bool IsBorder ( int x,int y );
-		static bool IsCell ( int x,int y );
-		static bool IsHorizontalBorder ( int x,int y );
-		static bool IsVerticalBorder ( int x,int y );
-
 		/// retrieves the number of set borders around this cell : x in [0,2*X+1), y in [0,2*Y+1)
 		void GetBorderCountAroundCell ( int x,int y,int &min,int &max ) const;
 
@@ -210,9 +221,6 @@ class SlinkerGrid
 
 		/// extract all dots that are connected to the one passed at the head of the array
 		void CollectJoinedDots ( std::vector< std::pair<int,int> > &dots ) const;
-
-		/// given an empty grid, generate a long wiggly loop line
-		void FillGridWithRandomLoop();
 
 		/// we've finished a grid, fill all the unknown borders with definite off state
 		void MarkUnknownBordersAsOff();
