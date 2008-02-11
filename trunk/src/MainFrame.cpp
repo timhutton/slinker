@@ -32,6 +32,8 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	EVT_MENU(ID::Minimal_Quit,  MainFrame::OnQuit)
 	EVT_MENU(ID::Minimal_About, MainFrame::OnAbout)
 	EVT_PAINT( MainFrame::OnPaint)
+	
+	EVT_MENU(ID::DemonstrateLoopGrowthRules,MainFrame::OnDemonstrateLoopGrowthRules)
 
 	EVT_MENU(ID::SearchForSolutions, MainFrame::OnSearchForSolutions)
 	EVT_MENU(ID::SearchForPuzzles, MainFrame::OnSearchForPuzzles)
@@ -41,7 +43,7 @@ END_EVENT_TABLE()
 
 MainFrame::MainFrame(const wxString& title)
 	: wxFrame(NULL, wxID_ANY, title),
-	  main_grid(20,14)
+	  main_grid(40,30)
 {
 #if wxUSE_MENUS
 	// create a menu bar
@@ -52,6 +54,9 @@ MainFrame::MainFrame(const wxString& title)
 	actionsMenu->Append(ID::SearchForPuzzles,_T("Search for puzzles.."),_T("Searches for puzzles with unique solutions"));
 	actionsMenu->Append(ID::SearchForNewRules,_T("Search for new rules.."),_T("Given the existing rules, searches for more complex ones"));
 	actionsMenu->Append(ID::TestLoopyFormat,_T("Test the Loopy format code..."),_T(""));
+	
+	wxMenu *toolsMenu = new wxMenu;
+	toolsMenu->Append(ID::DemonstrateLoopGrowthRules,_T("Demonstrate the growth rules"));
 
 	// the "About" item should be in the help menu
 	wxMenu *helpMenu = new wxMenu;
@@ -62,6 +67,7 @@ MainFrame::MainFrame(const wxString& title)
 	// now append the freshly created menu to the menu bar...
 	wxMenuBar *menuBar = new wxMenuBar();
 	menuBar->Append(fileMenu, _T("&File"));
+	menuBar->Append(toolsMenu,_T("&Tools"));
 	menuBar->Append(actionsMenu, _T("&Actions"));
 	menuBar->Append(helpMenu, _T("&Help"));
 
@@ -74,7 +80,6 @@ MainFrame::MainFrame(const wxString& title)
 	CreateStatusBar(1);
 #endif // wxUSE_STATUSBAR
 
-	this->main_grid.FillGridWithRandomLoop();
 }
 
 
@@ -480,3 +485,42 @@ void MainFrame::OnPaint(wxPaintEvent &event)
 	DrawGrid(this->main_grid,dc);
 }
 
+void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
+{
+	this->main_grid = SlinkerGrid(15,10);
+	this->main_grid.InitGridWithSeedLoop();
+	wxLogStatus(wxT("Starting with a single-cell loop..."));
+	Refresh();
+	Update();
+	wxSleep(3);
+	vector<SlinkerGrid::TRule> growth_rules = SlinkerGrid::GetGrowthRules();
+	const int N = this->main_grid.GetX() * this->main_grid.GetY() * 10;
+	wxLogStatus(wxT("Rules 1 and 2 only : a maximally-filled grid is predictable..."));
+	int prob_divs[]={50,100}; // tight grid
+	for(int i=0;i<N;i++)
+	{
+		this->main_grid.GrowLoop(growth_rules,prob_divs);
+		Refresh();
+		Update();
+		wxMilliSleep(1);
+	}
+	wxLogStatus(wxT("3 rules in balance : a looser, more interesting loop..."));
+	prob_divs[1]=80; // looser grid
+	for(int i=0;i<N;i++)
+	{
+		this->main_grid.GrowLoop(growth_rules,prob_divs);
+		Refresh();
+		Update();
+		wxMilliSleep(1);
+	}
+	wxLogStatus(wxT("Rules 1 and 3 only : loop adopts minimal curvature and shrinks..."));
+	prob_divs[1]=50; // shrinkage only
+	for(int i=0;i<N;i++)
+	{
+		if(!this->main_grid.GrowLoop(growth_rules,prob_divs)) break;
+		Refresh();
+		Update();
+		wxMilliSleep(1);
+	}
+	wxLogStatus(wxT(""));
+}

@@ -28,13 +28,17 @@ public:
 	/// ctor(s)
 	MainFrame(const wxString& title);
 
-	/// event handlers (these functions should _not_ be virtual)
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
+	
+	// actions menu
 	void OnSearchForSolutions(wxCommandEvent& event);
 	void OnSearchForPuzzles(wxCommandEvent& event);
 	void OnSearchForNewRules(wxCommandEvent& event);
 	void OnPaint(wxPaintEvent& event);
+	
+	// tools menu
+	void OnDemonstrateLoopGrowthRules(wxCommandEvent& event);
 	
 	/// debug
 	void OnTestLoopyFormat(wxCommandEvent& event);
