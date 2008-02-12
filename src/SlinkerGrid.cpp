@@ -639,19 +639,15 @@ bool SlinkerGrid::HasLoop()
 	return found_a_loop;
 }
 
-std::vector<SlinkerGrid> SlinkerGrid::FindSolutions(bool guessing_allowed,int max_n_wanted_solutions)
+std::vector<SlinkerGrid> SlinkerGrid::FindSolutions(const vector<TRule> &rules,bool guessing_allowed,int max_n_wanted_solutions)
 {
-	// retrieve some solving rules from somewhere
-	vector<TRule> solving_rules;
-	ReadRulesFromFile("solving_rules_3.txt",solving_rules); // load the rules from file
-	
 	// find some solutions
 	vector<SlinkerGrid> solutions;
-	FollowPossibilities(solving_rules,solutions,guessing_allowed,max_n_wanted_solutions);
+	FollowPossibilities(rules,solutions,guessing_allowed,max_n_wanted_solutions);
 	return solutions;
 }
 
-void SlinkerGrid::MakePuzzle()
+void SlinkerGrid::MakePuzzle(const vector<TRule>& rules,bool guessing_allowed)
 {
 	bool no_unique_solutions = false;
 	do
@@ -696,7 +692,7 @@ void SlinkerGrid::MakePuzzle()
 				for(vector<pair<pair<int,int>,int> >::const_iterator it=test_entries.begin();it!=test_entries.end();it++)
 					pad.cellValue(it->first.first,it->first.second)=it->second;
 				// do these test_entries still give us a unique solution?
-				solutions = pad.FindSolutions(false,2); // disallow back-tracking (else problems created are *hard*)
+				solutions = pad.FindSolutions(rules,guessing_allowed,2);
 				if(solutions.size()==1)
 				{
 					// this'll do! (could search other avenues too but no real need unless you want to be sure it's a global minimum)
@@ -1322,9 +1318,11 @@ void SlinkerGrid::ReadRulesFromFile(const string &filename,vector<TRule> &rules)
 	string line;
 	TRule r;
 	enum { starting,reading_requireds,reading_implieds } state = starting;
+	int lines_read=0;
 	while(!in.eof())
 	{
 		getline(in,line); 
+		lines_read++;
 		if(line.find("required:")==0 || in.eof())
 		{
 			// if there's a rule already read in then flush it
@@ -1343,10 +1341,14 @@ void SlinkerGrid::ReadRulesFromFile(const string &filename,vector<TRule> &rules)
 			// this must be an element line, read it in
 			TElement el(INT_MAX,INT_MAX,INT_MAX);
 			istringstream iss(line);
-			char c;
-			iss >> el.x >> c >> el.y >> c >> el.val;
-			if(el.val==INT_MAX) // bad way to test read success :(
-				throw(runtime_error("Error reading file: expected x,y,val"));
+			char c1,c2;
+			iss >> el.x >> c1 >> el.y >> c2 >> el.val;
+			if(c1!=',' || c2!=',') // bad way to test read success :(
+			{
+				ostringstream oss;
+				oss << "Error reading file (line " << lines_read << ") : expected x,y,val:\n\n" << line;
+				throw(runtime_error(oss.str().c_str()));
+			}
 			if(state==reading_requireds)
 				r.required.push_back(el);
 			else if(state==reading_implieds)
