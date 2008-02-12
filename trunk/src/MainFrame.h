@@ -39,10 +39,8 @@ public:
 	
 	// tools menu
 	void OnDemonstrateLoopGrowthRules(wxCommandEvent& event);
+	void OnMakeAnEasyPuzzle(wxCommandEvent& event);
 	
-	/// debug
-	void OnTestLoopyFormat(wxCommandEvent& event);
-
 private:
 
 	/// the grid that is drawn on the screen and solved by the user

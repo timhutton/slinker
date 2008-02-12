@@ -96,16 +96,19 @@ class SlinkerGrid
 		/// retrieve a string representation of the grid, with newlines, for easy printing
 		std::string GetPrintOut() const;
 
+		/// read some rules from a file
+		static void ReadRulesFromFile ( const std::string &filename,std::vector<TRule> &rules );
+		
 		///  Given a set of numbers entered into the grid, return the solutions (if any).
 		/**  Will use the grid as-is - set all borders to UNKNOWN if you just want to find solutions given the numbers.
 		*    @param guessing_allowed if false then only those solutions that can be found through simple rules are found; if true then recursion is also used to explore pathways
 		*    @param max_n_wanted_solutions set this to limit the number of solutions that are needed - e.g. 2 if you want to know  whether multiple solutions exist, or 1 if you know a solution exists.
 		*    @return the unique solutions that were found for the puzzle
 		*/
-		std::vector<SlinkerGrid> FindSolutions ( bool guessing_allowed,int max_n_wanted_solutions );
+		std::vector<SlinkerGrid> FindSolutions (const std::vector<TRule>& rules,bool guessing_allowed,int max_n_wanted_solutions );
 
 		/// given the grid size and shape, make a puzzle with a unique solution
-		void MakePuzzle();
+		void MakePuzzle(const std::vector<TRule>& rules,bool guessing_allowed);
 
 		/// sets all borders and cell entries to UNKNOWN
 		void Clear();
@@ -211,7 +214,6 @@ class SlinkerGrid
 
 		/// rules can be written to disk for sharing
 		static void WriteRulesToFile ( const std::vector<TRule> &rules,const std::string &filename );
-		static void ReadRulesFromFile ( const std::string &filename,std::vector<TRule> &rules );
 
 		/// apply whatever local implication rules are valid
 		/** @param rules the local solving rules that we use

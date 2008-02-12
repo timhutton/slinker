@@ -34,9 +34,9 @@ namespace ID
 		SearchForSolutions,
 		SearchForPuzzles,
 		SearchForNewRules,
-		TestLoopyFormat,
 		
 		// tools menu
 		DemonstrateLoopGrowthRules,
+		MakeAnEasyPuzzle,
 	};
 };

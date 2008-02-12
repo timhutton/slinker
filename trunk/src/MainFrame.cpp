@@ -34,11 +34,11 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	EVT_PAINT( MainFrame::OnPaint)
 	
 	EVT_MENU(ID::DemonstrateLoopGrowthRules,MainFrame::OnDemonstrateLoopGrowthRules)
+	EVT_MENU(ID::MakeAnEasyPuzzle,MainFrame::OnMakeAnEasyPuzzle)
 
 	EVT_MENU(ID::SearchForSolutions, MainFrame::OnSearchForSolutions)
 	EVT_MENU(ID::SearchForPuzzles, MainFrame::OnSearchForPuzzles)
 	EVT_MENU(ID::SearchForNewRules, MainFrame::OnSearchForNewRules)
-	EVT_MENU(ID::TestLoopyFormat, MainFrame::OnTestLoopyFormat)
 END_EVENT_TABLE()
 
 MainFrame::MainFrame(const wxString& title)
@@ -53,10 +53,11 @@ MainFrame::MainFrame(const wxString& title)
 	actionsMenu->Append(ID::SearchForSolutions,_T("Search for solutions.."),_T("Searches for solutions"));
 	actionsMenu->Append(ID::SearchForPuzzles,_T("Search for puzzles.."),_T("Searches for puzzles with unique solutions"));
 	actionsMenu->Append(ID::SearchForNewRules,_T("Search for new rules.."),_T("Given the existing rules, searches for more complex ones"));
-	actionsMenu->Append(ID::TestLoopyFormat,_T("Test the Loopy format code..."),_T(""));
 	
 	wxMenu *toolsMenu = new wxMenu;
+	toolsMenu->Append(ID::MakeAnEasyPuzzle,_T("Make an easy puzzle"));
 	toolsMenu->Append(ID::DemonstrateLoopGrowthRules,_T("Demonstrate the growth rules"));
+	
 
 	// the "About" item should be in the help menu
 	wxMenu *helpMenu = new wxMenu;
@@ -319,9 +320,11 @@ void MainFrame::OnSearchForSolutions(wxCommandEvent &event)
 	g6.cellValue(4,4)=1;
 
 	SlinkerGrid g(g6);
+	
+	vector<SlinkerGrid::TRule> rules;
 
 	vector<SlinkerGrid> solutions;
-	solutions = g.FindSolutions(true,2); // allow guessing
+	solutions = g.FindSolutions(rules,true,2); // allow guessing
 
 	if(solutions.size()==1)
 	{
@@ -350,7 +353,9 @@ void MainFrame::OnSearchForPuzzles(wxCommandEvent &event)
 {
 	wxBusyCursor b;
 	SlinkerGrid g(10,10);
-	g.MakePuzzle();
+	vector<SlinkerGrid::TRule> rules;
+	SlinkerGrid::ReadRulesFromFile("solving_rules_3.txt",rules);
+	g.MakePuzzle(rules,false);
 	string loopy = g.GetPuzzleInLoopyFormat();
 	ofstream out("loopy.txt");
 	out << loopy;
@@ -363,23 +368,6 @@ void MainFrame::OnSearchForNewRules(wxCommandEvent &event)
 	SlinkerGrid::FindNewRules();
 }
 
-void MainFrame::OnTestLoopyFormat(wxCommandEvent& event)
-{
-	//SlinkerGrid g = SlinkerGrid::ReadFromLoopyFormat("40x30:23b3a202a33b2a3a2b3a3a3b13a333a2b21b3a1d0b22c23b21c21b1d2a3d2d131102b2h2b103131d2b22a2a2g210a211222a111g1a2a212a2a1121a2b21a012d101a13b1a1112a1a3a222b23f20b2b1b03f11b312c11b3a1a323c31a22a23c311a2a1b32b3b12e20a21c1b3c01a13e22b1a11b222g01b21b33g120b31a33a12a23312a21a2312222122a32a21213a22a23c13a2b2a23f12f11a1b2a21c22c1a2a22c31a0d3a31c00a1a2c22a2a1b12a3a21c01222012c21a1a22b2a3b1a2e1b3a2b1d2b3a3b3e1a2b1a223231a3b0b2b23b1b1b1a211131a2b3a132223a2b2b0b01b2b3b1a101232a2b2a1e0b1a2b3d2b2a2b2e2a1b3a2b13a1a12c13131212c33a1a33b1a2a31c3a3a33c12a3d2a11c10a1a1c21c11a1b2a12f32f23a3b1a22c32a21a12032a22a1131213232a31a22110a22a12a21b212g22b23b21g232b12a2b22e23a32c2b1c11a10e32b2b22b2a1a020c22a20a11c121a3a2b23c222b22f13b1b3b22f01b222a2a2a1213a1b31a132d322a21b3a1220a1a231a2a2g011a112112a222g1a1a32b3d322223b2h0b323313d2d1a3d3b22c20b21c12b2d2a3b22b3a123a13b2a2a2b3a3a1b22a012a2b12");
-	SlinkerGrid g = SlinkerGrid::ReadFromLoopyFormat("10x10:1a1a3a13a1b212g1e3b1c212d1c2a2131a11i13b021b3a3a31c1a1a21a23c32c2");
-	wxBusyCursor busy;
-	vector<SlinkerGrid> solutions = g.FindSolutions(true,1);
-	if(!solutions.empty())
-	{
-		ofstream out("from_loopy.txt");
-		solutions.front().MarkOffBordersAsUnknown();
-		out << solutions.front().GetPrintOut() << "\n\n";
-		wxMessageBox(wxT("Success!"));
-	}
-	else
-		wxMessageBox(wxT("Failed to find a solution."));
-	
-}
 
 void DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
 {
@@ -494,7 +482,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 	Update();
 	wxSleep(3);
 	vector<SlinkerGrid::TRule> growth_rules = SlinkerGrid::GetGrowthRules();
-	const int N = this->main_grid.GetX() * this->main_grid.GetY() * 10;
+	const int N = this->main_grid.GetX() * this->main_grid.GetY() * 3;
 	wxLogStatus(wxT("Rules 1 and 2 only : a maximally-filled grid is predictable..."));
 	int prob_divs[]={50,100}; // tight grid
 	for(int i=0;i<N;i++)
@@ -506,7 +494,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 	}
 	wxLogStatus(wxT("3 rules in balance : a looser, more interesting loop..."));
 	prob_divs[1]=80; // looser grid
-	for(int i=0;i<N;i++)
+	for(int i=0;i<N*2;i++)
 	{
 		this->main_grid.GrowLoop(growth_rules,prob_divs);
 		Refresh();
@@ -515,7 +503,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 	}
 	wxLogStatus(wxT("Rules 1 and 3 only : loop adopts minimal curvature and shrinks..."));
 	prob_divs[1]=50; // shrinkage only
-	for(int i=0;i<N;i++)
+	for(int i=0;i<N*8;i++)
 	{
 		if(!this->main_grid.GrowLoop(growth_rules,prob_divs)) break;
 		Refresh();
@@ -523,4 +511,18 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 		wxMilliSleep(1);
 	}
 	wxLogStatus(wxT(""));
+}
+
+void MainFrame::OnMakeAnEasyPuzzle(wxCommandEvent& event)
+{
+	// just a draft for now
+	wxLogStatus(_T("Working..."));
+	wxBusyCursor busy;
+	vector<SlinkerGrid::TRule> rules;
+	SlinkerGrid::ReadRulesFromFile("solving_rules_3.txt",rules);
+	SlinkerGrid g(10,10);
+	g.MakePuzzle(rules,false);
+	this->main_grid = g;
+	Refresh();
+	wxLogStatus(_T(""));
 }
