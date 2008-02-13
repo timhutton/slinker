@@ -95,7 +95,7 @@ bool SlinkerGrid::IsOnGrid(int x,int y) const
 
 	switch(this->grid_shape)
 	{
-		case Rectangle:
+		case RectangleShape:
 			{
 				return true; // plain rectangle
 			}
@@ -105,7 +105,7 @@ bool SlinkerGrid::IsOnGrid(int x,int y) const
 				// (looks best if X and Y are divisible by 3)
 				return (x<2*int(X/3)+1 || x>2*(2*int(X/3)-1)+1 || y<2*int(Y/3)+1 || y>2*(2*int(Y/3)-1)+1);
 			}
-		case Circle:
+		case CircleShape:
 			{
 				if(X!=Y) throw(runtime_error("IsOnGrid: X and Y must be equal."));
 				//if(2*int(X/2)!=X) throw(runtime_error("IsOnGrid: X must be even."));
@@ -407,7 +407,7 @@ void SlinkerGrid::InitGridWithSeedLoop()
 {
 	// start with a grid full of offs
 	this->Clear();
-	this->MarkUnknownBordersAsOff();
+	//this->MarkUnknownBordersAsOff();
 	// start with a single cell loop
 	int x,y;
 	do {
@@ -437,15 +437,16 @@ bool SlinkerGrid::GrowLoop(const vector<TRule>& growth_rules,const int* prob_div
 			tx = x + SYMMETRIES[iSymm].mX(it->x,it->y);
 			ty = y + SYMMETRIES[iSymm].mY(it->x,it->y);
 			// check that this cell entry matches the required list
-			if( !( (it->val==0 && !IsOnGrid(tx,ty)) || 	(IsOnGrid(tx,ty) && cells[tx][ty]==it->val) ) )
-				can_apply = false;
+			if( !( (it->val==0 && !IsOnGrid(tx,ty)) || 	
+				(IsOnGrid(tx,ty) && (cells[tx][ty]==it->val || (it->val==0 && cells[tx][ty]==UNKNOWN))) ) )
+					can_apply = false;
 		}
 		// also check that all our implieds are actually on the grid
 		for(it = growth_rules[iRule].implied.begin();it!=growth_rules[iRule].implied.end() && can_apply;it++)
 		{
 			tx = x + SYMMETRIES[iSymm].mX(it->x,it->y);
 			ty = y + SYMMETRIES[iSymm].mY(it->x,it->y);
-			if(!IsOnGrid(tx,ty))
+			if(!IsOnGrid(tx,ty)) // (could just check that 'on' borders are on the grid)
 				can_apply=false;
 		}
 		if(can_apply)
@@ -455,7 +456,9 @@ bool SlinkerGrid::GrowLoop(const vector<TRule>& growth_rules,const int* prob_div
 				tx = x + SYMMETRIES[iSymm].mX(it->x,it->y);
 				ty = y + SYMMETRIES[iSymm].mY(it->x,it->y);
 				if(IsOnGrid(tx,ty) && cells[tx][ty] != it->val)
-					cells[tx][ty] = it->val;
+				{
+					cells[tx][ty] = it->val==1?1:UNKNOWN;
+				}
 			}
 			return true;
 		}
@@ -471,7 +474,20 @@ void SlinkerGrid::Clear()
 	int x;
 	for(x=0;x<2*X+1;x++)
 	{
-		fill(cells[x].begin(),cells[x].end(),-1);//SlinkerGrid::UNKNOWN);
+		fill(cells[x].begin(),cells[x].end(),UNKNOWN);
+	}
+}
+
+void SlinkerGrid::ClearBorders()
+{
+	int x,y;
+	for(x=0;x<2*X+1;x++)
+	{
+		for(y=0;y<2*Y+1;y++)
+		{
+			if(IsBorder(x,y))
+				this->cells[x][y] = UNKNOWN;
+		}
 	}
 }
 
