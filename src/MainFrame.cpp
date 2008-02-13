@@ -39,11 +39,15 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	EVT_MENU(ID::SearchForSolutions, MainFrame::OnSearchForSolutions)
 	EVT_MENU(ID::SearchForPuzzles, MainFrame::OnSearchForPuzzles)
 	EVT_MENU(ID::SearchForNewRules, MainFrame::OnSearchForNewRules)
+	
+	EVT_LEFT_UP(MainFrame::OnLeftClick)
+	EVT_RIGHT_UP(MainFrame::OnRightClick)
+	
 END_EVENT_TABLE()
 
 MainFrame::MainFrame(const wxString& title)
-	: wxFrame(NULL, wxID_ANY, title),
-	  main_grid(40,30)
+	: wxFrame(NULL, wxID_ANY, title),the_solution(5,5),main_grid(40,30),
+	has_solved(false)
 {
 #if wxUSE_MENUS
 	// create a menu bar
@@ -368,15 +372,32 @@ void MainFrame::OnSearchForNewRules(wxCommandEvent &event)
 	SlinkerGrid::FindNewRules();
 }
 
-
-void DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
+void MainFrame::ComputeDrawingCoordinates(const SlinkerGrid& g,wxPaintDC& dc)
 {
 	const int BORDER = 10;
 	const int X = g.GetX();
 	const int Y = g.GetY();
-	int cell_size = min((dc.GetSize().x-BORDER*2)/X,(dc.GetSize().y-BORDER*2)/Y);
-	wxPoint origin(dc.GetSize().x/2 - (cell_size * X)/2,
-		dc.GetSize().y/2 - (cell_size * Y)/2);
+	this->cell_size = min((dc.GetSize().x-BORDER*2)/X,(dc.GetSize().y-BORDER*2)/Y);
+	this->origin.x = dc.GetSize().x/2 - (cell_size * X)/2;
+	this->origin.y = dc.GetSize().y/2 - (cell_size * Y)/2;
+}
+
+void DrawCross(wxPaintDC& dc,wxPoint p,int cell_size)
+{
+	wxPen offPen(wxColour(255,200,200),2);
+	dc.SetPen(offPen);
+	int r = cell_size/10;
+	dc.DrawLine(p.x-r,p.y-r,p.x+r,p.y+r);
+	dc.DrawLine(p.x-r,p.y+r,p.x+r,p.y-r);
+	dc.SetPen(wxNullPen);
+}
+
+void MainFrame::DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
+{
+	// we need a better method than recomputing this each time - but how?
+	this->ComputeDrawingCoordinates(g,dc);
+	const int X = g.GetX();
+	const int Y = g.GetY();
 	// blank the area
 	dc.SetPen(*wxWHITE_PEN);
 	dc.SetBrush(*wxWHITE_BRUSH);
@@ -399,54 +420,44 @@ void DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
 			origin.y + cell_size*y);
 	}
 	// draw the borders
-	int line_thickness = 1;//+3*int(cell_size/30); // want odd numbers
-	wxColour col = wxColour(0,0,160);
-	wxColour col2 = wxColour(128,128,208); // highlight
-	dc.SetPen(wxPen(col,line_thickness));
+	wxPen onPen(wxColour(100,100,255),3);
 	for(x=0;x<2*X+1;x++)
 	{
 		for(y=0;y<2*Y+1;y++)
 		{
-			if(g.IsBorder(x,y) && g.gridValue(x,y)==1)
+			if(g.IsBorder(x,y) && g.gridValue(x,y)!=SlinkerGrid::UNKNOWN)
 			{
-				if(g.IsHorizontalBorder(x,y))
+				if(g.gridValue(x,y)==0)
 				{
-					int sx = (x-1)/2;
-					int sy = y/2;
-					if(line_thickness<=1)
-						dc.DrawLine(origin.x+sx*cell_size,origin.y+sy*cell_size,origin.x+(sx+1)*cell_size+1,origin.y+sy*cell_size);
+					if(g.IsHorizontalBorder(x,y))
+					{
+						int sx = (x-1)/2;
+						int sy = y/2;
+						DrawCross(dc,wxPoint(origin.x+sx*cell_size+cell_size/2,origin.y+sy*cell_size),cell_size);
+					}
 					else
 					{
-						dc.GradientFillLinear(wxRect(origin.x+sx*cell_size,origin.y+sy*cell_size-line_thickness/2,cell_size,2),col,col2,wxSOUTH);
-						dc.GradientFillLinear(wxRect(origin.x+sx*cell_size,origin.y+sy*cell_size-line_thickness/2+2,cell_size,line_thickness-2),col2,col,wxSOUTH);
+						int sx = x/2;
+						int sy = (y-1)/2;
+						DrawCross(dc,wxPoint(origin.x+sx*cell_size,origin.y+sy*cell_size+cell_size/2),cell_size);
 					}
 				}
 				else
 				{
-					int sx = x/2;
-					int sy = (y-1)/2;
-					if(line_thickness<=1)
-						dc.DrawLine(origin.x+sx*cell_size,origin.y+sy*cell_size,origin.x+sx*cell_size,origin.y+(sy+1)*cell_size+1);
+					dc.SetPen(onPen);
+					if(g.IsHorizontalBorder(x,y))
+					{
+						int sx = (x-1)/2;
+						int sy = y/2;
+						dc.DrawLine(origin.x+sx*cell_size,origin.y+sy*cell_size,origin.x+(sx+1)*cell_size,origin.y+sy*cell_size);
+					}
 					else
 					{
-						dc.GradientFillLinear(wxRect(origin.x+sx*cell_size-line_thickness/2,origin.y+sy*cell_size,2,cell_size),col,col2,wxEAST);
-						dc.GradientFillLinear(wxRect(origin.x+sx*cell_size-line_thickness/2+2,origin.y+sy*cell_size,line_thickness-2,cell_size),col2,col,wxEAST);
+						int sx = x/2;
+						int sy = (y-1)/2;
+						dc.DrawLine(origin.x+sx*cell_size,origin.y+sy*cell_size,origin.x+sx*cell_size,origin.y+(sy+1)*cell_size);
 					}
 				}
-			}
-		}
-	}
-	// draw the dots
-	int radius = line_thickness;
-	if(radius>1)
-	{
-		dc.SetPen(wxPen(col,1));
-		dc.SetBrush(wxBrush(col));
-		for(x=0;x<=X;x++)
-		{
-			for(y=0;y<=Y;y++)
-			{
-				dc.DrawRectangle(origin.x+cell_size*x-radius,origin.y+cell_size*y-radius,radius*2,radius*2);
 			}
 		}
 	}
@@ -461,7 +472,7 @@ void DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
 				char c = '0'+g.cellValue(x,y);
 				wxString str(&c,wxConvUTF8,1);
 				wxSize s = dc.GetTextExtent(str);
-				dc.DrawText(str,origin.x+cell_size*(x+0.5)-s.x/2,origin.y+cell_size*(y+0.5)-s.y/2);
+				dc.DrawText(str,wxRound(origin.x+cell_size*(x+0.5)-s.x/2),wxRound(origin.y+cell_size*(y+0.5)-s.y/2));
 			}
 		}
 	}
@@ -527,10 +538,84 @@ void MainFrame::OnMakeAnEasyPuzzle(wxCommandEvent& event)
 		wxMessageBox(wxString(e.what(),wxConvUTF8));
 		return;
 	}
-	SlinkerGrid g(10,10);
+	SlinkerGrid g(7,7);
 	g.MakePuzzle(rules,false);
+	this->the_solution = g;
+	g.ClearBorders();
 	this->main_grid = g;
+	this->has_solved=false;
 	wxLogStatus(_T(""));
 	Refresh();
-	wxMessageBox(wxString(g.GetPuzzleInLoopyFormat().c_str(),wxConvUTF8));
+}
+
+wxPoint MainFrame::GetGridCoords(wxPoint p)
+{
+	// work out which border was closest, if any
+	double px,py;
+	px = 2.0 * (p.x - this->origin.x ) / this->cell_size;
+	py = 2.0 * (p.y - this->origin.y ) / this->cell_size;
+	wxPoint gp(wxRound(px),wxRound(py));
+	return gp;
+}
+
+void MainFrame::OnLeftClick(wxMouseEvent& event)
+{
+	// work out which border was closest, if any
+	wxPoint p(this->GetGridCoords(wxPoint(event.m_x,event.m_y)));
+	if(this->main_grid.IsOnGrid(p.x,p.y) && this->main_grid.IsBorder(p.x,p.y))
+	{
+		int val = this->main_grid.gridValue(p.x,p.y);
+		if(val==SlinkerGrid::UNKNOWN) val=1;
+		else if(val==1) val=0;
+		else val=SlinkerGrid::UNKNOWN;
+		this->main_grid.gridValue(p.x,p.y) = val;
+		Refresh();
+		CheckForSuccess();
+	}
+}
+
+void MainFrame::OnRightClick(wxMouseEvent& event)
+{
+	// work out which border was closest, if any
+	wxPoint p(this->GetGridCoords(wxPoint(event.m_x,event.m_y)));
+	if(this->main_grid.IsOnGrid(p.x,p.y) && this->main_grid.IsBorder(p.x,p.y))
+	{
+		int val = this->main_grid.gridValue(p.x,p.y);
+		if(val==SlinkerGrid::UNKNOWN) val=0;
+		else if(val==0) val=1;
+		else val=SlinkerGrid::UNKNOWN;
+		this->main_grid.gridValue(p.x,p.y) = val;
+		Refresh();
+		CheckForSuccess();
+	}
+}
+
+void MainFrame::CheckForSuccess()
+{
+	if(this->has_solved) return;
+	bool all_correct=true;
+	const int X = this->main_grid.GetX();
+	const int Y = this->main_grid.GetY();
+	int x,y;
+	for(x=0;x<2*X+1 && all_correct;x++)
+	{
+		for(y=0;y<2*Y+1 && all_correct;y++)
+		{
+			if(this->main_grid.IsBorder(x,y))
+			{
+				if(this->the_solution.gridValue(x,y)==1)
+				{
+					if(this->main_grid.gridValue(x,y)!=1)
+						all_correct = false;
+				}
+				else if(this->main_grid.gridValue(x,y)==1) 
+					all_correct=false;
+			}
+		}
+	}
+	if(all_correct)
+	{
+		wxMessageBox(wxT("Completed!"));
+		this->has_solved = true;
+	}
 }

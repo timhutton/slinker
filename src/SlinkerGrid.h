@@ -33,9 +33,9 @@ class SlinkerGrid
 		/// the different shapes that can be embedded in the rectangle
 		enum TGridShape
 		{
-			Rectangle, ///< default is to use the whole rectangle
+			RectangleShape, ///< default is to use the whole rectangle
 			MissingCentre, ///< the central third is off-limits, giving a sort of donut shape
-			Circle ///< (for square grids only) a circle is inscribed
+			CircleShape ///< (for square grids only) a circle is inscribed
 		};
 		/// an element is a value in an x,y location - used in rules
 		struct TElement
@@ -58,7 +58,7 @@ class SlinkerGrid
 		* @param y grid height (4+)
 		* @param gs shape of the grid
 		*/
-		SlinkerGrid ( int x,int y,TGridShape gs=Rectangle );
+		SlinkerGrid (int x,int y,TGridShape gs = RectangleShape);
 
 		SlinkerGrid ( const SlinkerGrid& g );
 		SlinkerGrid& operator= ( const SlinkerGrid& g );
@@ -109,6 +109,9 @@ class SlinkerGrid
 
 		/// given the grid size and shape, make a puzzle with a unique solution
 		void MakePuzzle(const std::vector<TRule>& rules,bool guessing_allowed);
+		
+		/// set all borders to UNKNOWN
+		void ClearBorders();
 
 		/// sets all borders and cell entries to UNKNOWN
 		void Clear();
@@ -164,6 +167,9 @@ class SlinkerGrid
 		static bool IsHorizontalBorder ( int x,int y );
 		static bool IsVerticalBorder ( int x,int y );
 
+		/// are the grid coordinates supplied valid?
+		bool IsOnGrid ( int x,int y ) const;
+
 	private: // private classes
 
 		/// a 2x2 integer matrix for reflections and quarter rotations
@@ -198,9 +204,6 @@ class SlinkerGrid
 		static const TMatrix SYMMETRIES[N_SYMMETRIES];
 
 	private: // private methods
-
-		/// are the grid coordinates supplied valid?
-		bool IsOnGrid ( int x,int y ) const;
 
 		/// retrieves the number of set borders around this cell : x in [0,2*X+1), y in [0,2*Y+1)
 		void GetBorderCountAroundCell ( int x,int y,int &min,int &max ) const;

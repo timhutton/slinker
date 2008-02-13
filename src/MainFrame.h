@@ -17,9 +17,9 @@
 	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "SlinkerGrid.h"
-
 #include "wxWidgets_standard_headers.h"
+
+#include "SlinkerGrid.h"
 
 /// the main window of the application
 class MainFrame : public wxFrame
@@ -41,10 +41,31 @@ public:
 	void OnDemonstrateLoopGrowthRules(wxCommandEvent& event);
 	void OnMakeAnEasyPuzzle(wxCommandEvent& event);
 	
-private:
+	// mouse handling
+	void OnLeftClick(wxMouseEvent& event);
+	void OnRightClick(wxMouseEvent& event);
+	
+private: // private data
 
-	/// the grid that is drawn on the screen and solved by the user
+	/// the grid that is drawn on the screen and worked on by the user
 	SlinkerGrid main_grid;
+	
+	/// the grid that contains the solution to main_grid (if applicable) for quick comparison
+	SlinkerGrid the_solution;
+	
+	/// we make a note if the current grid is solved once, to prevent multiple alerts
+	bool has_solved;
+	
+	/// the top-left corner of the grid, in pixels
+	wxPoint origin;
+	int cell_size;
+	
+private: // private methods
+	
+	void DrawGrid(const SlinkerGrid& g,wxPaintDC& dc);
+	void ComputeDrawingCoordinates(const SlinkerGrid& g,wxPaintDC& dc);
+	wxPoint GetGridCoords(wxPoint p);
+	void CheckForSuccess();
 
 	// any class wishing to process wxWidgets events must use this macro
 	DECLARE_EVENT_TABLE()
