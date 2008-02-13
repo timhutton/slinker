@@ -519,10 +519,18 @@ void MainFrame::OnMakeAnEasyPuzzle(wxCommandEvent& event)
 	wxLogStatus(_T("Working..."));
 	wxBusyCursor busy;
 	vector<SlinkerGrid::TRule> rules;
-	SlinkerGrid::ReadRulesFromFile("solving_rules_3.txt",rules);
+	try {
+		SlinkerGrid::ReadRulesFromFile("solving_rules_4.txt",rules);
+	}
+	catch(exception e)
+	{
+		wxMessageBox(wxString(e.what(),wxConvUTF8));
+		return;
+	}
 	SlinkerGrid g(10,10);
 	g.MakePuzzle(rules,false);
 	this->main_grid = g;
-	Refresh();
 	wxLogStatus(_T(""));
+	Refresh();
+	wxMessageBox(wxString(g.GetPuzzleInLoopyFormat().c_str(),wxConvUTF8));
 }
