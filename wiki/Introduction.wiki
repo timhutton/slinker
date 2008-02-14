@@ -13,13 +13,12 @@ Slinker is available as source code, or as binaries for certain platforms.
 === Status ===
 
 An early alpha of Slinker is available. You can:
-*create and solve puzzles using a set of rules
-*export puzzles as a Loopy string
-*compute more rules, if SlinkerGrid::FindNewRules() makes sense to you
+  * create and solve puzzles using a set of rules
+  * export puzzles as a Loopy string
+  * compute more rules, if SlinkerGrid::FindNewRules() makes sense to you
 
 === Future work ===
 
-*Solver should be able to offer hints when you get stuck, by pointing out where a rule can apply.
-*Puzzle creation should be faster - can we derive 'number removal' rules that tell us which numbers can be removed for a given local situation, given a set of solving rules?
-*Export as full Loopy format.
-
+  * Solver should be able to offer hints when you get stuck, by pointing out where a rule can apply.
+  * Puzzle creation should be faster - can we derive 'number removal' rules that tell us which numbers can be removed for a given local situation, given a set of solving rules?
+  * Export as full Loopy format.
