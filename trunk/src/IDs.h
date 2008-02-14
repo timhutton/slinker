@@ -30,7 +30,11 @@ namespace ID
 		// this standard value as otherwise it won't be handled properly under Mac
 		// (where it is special and put into the "Apple" menu)
 		Minimal_About = wxID_ABOUT,
+
+		// file menu
+		ExportLoopyPuzzleString,
 	
+		// actions menu
 		SearchForSolutions,
 		SearchForPuzzles,
 		SearchForNewRules,

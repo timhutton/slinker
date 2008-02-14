@@ -528,8 +528,9 @@ bool SlinkerGrid::ApplyRules(const vector<TRule>& rules,vector<int*> &changed)
 						{
 							tx = x + SYMMETRIES[iSymm].mX(it->x,it->y);
 							ty = y + SYMMETRIES[iSymm].mY(it->x,it->y);
+							if(!IsOnGrid(tx,ty)) continue;
 							pEntry = &cells[tx][ty];
-							if(IsOnGrid(tx,ty) && *pEntry != it->val)
+							if(*pEntry != it->val)
 							{
 								if(*pEntry != UNKNOWN)
 								{

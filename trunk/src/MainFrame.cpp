@@ -25,33 +25,47 @@
 #include <sstream>
 using namespace std;
 
+#include <math.h>
+
 // the event tables connect the wxWidgets events with the functions (event
 // handlers) which process them. It can be also done at run-time, but for the
 // simple menu events like this the static method is much simpler.
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
+
+	// application events
 	EVT_MENU(ID::Minimal_Quit,  MainFrame::OnQuit)
 	EVT_MENU(ID::Minimal_About, MainFrame::OnAbout)
 	EVT_PAINT( MainFrame::OnPaint)
+	EVT_SIZE( MainFrame::OnSize)
+
+	// file menu
+	EVT_MENU(ID::ExportLoopyPuzzleString,MainFrame::OnExportLoopyPuzzleString)
 	
+	// tools menu
 	EVT_MENU(ID::DemonstrateLoopGrowthRules,MainFrame::OnDemonstrateLoopGrowthRules)
 	EVT_MENU(ID::MakeAnEasyPuzzle,MainFrame::OnMakeAnEasyPuzzle)
 
+	// actions menu
 	EVT_MENU(ID::SearchForSolutions, MainFrame::OnSearchForSolutions)
 	EVT_MENU(ID::SearchForPuzzles, MainFrame::OnSearchForPuzzles)
 	EVT_MENU(ID::SearchForNewRules, MainFrame::OnSearchForNewRules)
 	
+	// mouse events
 	EVT_LEFT_UP(MainFrame::OnLeftClick)
 	EVT_RIGHT_UP(MainFrame::OnRightClick)
 	
 END_EVENT_TABLE()
 
 MainFrame::MainFrame(const wxString& title)
-	: wxFrame(NULL, wxID_ANY, title),the_solution(5,5),main_grid(40,30),
-	has_solved(false)
+	: wxFrame(NULL, wxID_ANY, title),the_solution(40,30),main_grid(40,30),
+	has_solved(true)
 {
 #if wxUSE_MENUS
 	// create a menu bar
 	wxMenu *fileMenu = new wxMenu;
+	fileMenu->Append(ID::ExportLoopyPuzzleString,_T("Export puzzle as a Loopy format string"));
+	fileMenu->AppendSeparator();
+	fileMenu->Append(ID::Minimal_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
 
 	wxMenu *actionsMenu = new wxMenu;
 	actionsMenu->Append(ID::SearchForSolutions,_T("Search for solutions.."),_T("Searches for solutions"));
@@ -62,12 +76,9 @@ MainFrame::MainFrame(const wxString& title)
 	toolsMenu->Append(ID::MakeAnEasyPuzzle,_T("Make an easy puzzle"));
 	toolsMenu->Append(ID::DemonstrateLoopGrowthRules,_T("Demonstrate the growth rules"));
 	
-
 	// the "About" item should be in the help menu
 	wxMenu *helpMenu = new wxMenu;
 	helpMenu->Append(ID::Minimal_About, _T("&About...\tF1"), _T("Show about dialog"));
-
-	fileMenu->Append(ID::Minimal_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
 
 	// now append the freshly created menu to the menu bar...
 	wxMenuBar *menuBar = new wxMenuBar();
@@ -392,6 +403,8 @@ void DrawCross(wxPaintDC& dc,wxPoint p,int cell_size)
 	dc.SetPen(wxNullPen);
 }
 
+int round(float f) { return int((f-floor(f)<0.5f)?floor(f):ceil(f)); }
+
 void MainFrame::DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
 {
 	// we need a better method than recomputing this each time - but how?
@@ -399,7 +412,6 @@ void MainFrame::DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
 	const int X = g.GetX();
 	const int Y = g.GetY();
 	// blank the area
-	dc.SetPen(*wxWHITE_PEN);
 	dc.SetBrush(*wxWHITE_BRUSH);
 	dc.DrawRectangle(0,0,dc.GetSize().x,dc.GetSize().y);
 	// draw the grid in light grey
@@ -471,8 +483,9 @@ void MainFrame::DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
 			{
 				char c = '0'+g.cellValue(x,y);
 				wxString str(&c,wxConvUTF8,1);
-				wxSize s = dc.GetTextExtent(str);
-				dc.DrawText(str,wxRound(origin.x+cell_size*(x+0.5)-s.x/2),wxRound(origin.y+cell_size*(y+0.5)-s.y/2));
+				wxSize s;
+				dc.GetTextExtent(str,&s.x,&s.y);
+				dc.DrawText(str,round(origin.x+cell_size*(x+0.5)-s.x/2),round(origin.y+cell_size*(y+0.5)-s.y/2));
 			}
 		}
 	}
@@ -489,8 +502,9 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 	this->main_grid = SlinkerGrid(15,10);
 	this->main_grid.InitGridWithSeedLoop();
 	wxLogStatus(wxT("Starting with a single-cell loop..."));
-	Refresh();
+	Refresh(false);
 	Update();
+	wxYield();
 	wxSleep(3);
 	vector<SlinkerGrid::TRule> growth_rules = SlinkerGrid::GetGrowthRules();
 	const int N = this->main_grid.GetX() * this->main_grid.GetY() * 3;
@@ -499,53 +513,61 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 	for(int i=0;i<N;i++)
 	{
 		this->main_grid.GrowLoop(growth_rules,prob_divs);
-		Refresh();
+		Refresh(false);
 		Update();
 		wxMilliSleep(1);
+		wxYield();
 	}
 	wxLogStatus(wxT("3 rules in balance : a looser, more interesting loop..."));
 	prob_divs[1]=80; // looser grid
 	for(int i=0;i<N*2;i++)
 	{
 		this->main_grid.GrowLoop(growth_rules,prob_divs);
-		Refresh();
+		Refresh(false);
 		Update();
 		wxMilliSleep(1);
+		wxYield();
 	}
 	wxLogStatus(wxT("Rules 1 and 3 only : loop adopts minimal curvature and shrinks..."));
 	prob_divs[1]=50; // shrinkage only
 	for(int i=0;i<N*8;i++)
 	{
 		if(!this->main_grid.GrowLoop(growth_rules,prob_divs)) break;
-		Refresh();
+		Refresh(false);
 		Update();
 		wxMilliSleep(1);
+		wxYield();
 	}
 	wxLogStatus(wxT(""));
 }
 
 void MainFrame::OnMakeAnEasyPuzzle(wxCommandEvent& event)
 {
-	// just a draft for now
-	wxLogStatus(_T("Working..."));
+	long size = wxGetNumberFromUser(_T("What size of grid?"),_T("Size: (4-20)"),_T("hello"),7,4,20);
+	wxString filename = wxFileSelector(_T("Specify the solving rules file to use:"),0,_T("solving_rules*.txt"),_T("txt"),
+		_T("*.txt"),wxOPEN|wxFILE_MUST_EXIST);
+	if(filename.empty()) return;
+
+	wxLogStatus(_T("Working... (may take some time for larger puzzles)"));
 	wxBusyCursor busy;
+
 	vector<SlinkerGrid::TRule> rules;
 	try {
-		SlinkerGrid::ReadRulesFromFile("solving_rules_4.txt",rules);
+		SlinkerGrid::ReadRulesFromFile(string(filename),rules);
 	}
 	catch(exception e)
 	{
 		wxMessageBox(wxString(e.what(),wxConvUTF8));
 		return;
 	}
-	SlinkerGrid g(7,7);
+	SlinkerGrid g(size,size);
 	g.MakePuzzle(rules,false);
 	this->the_solution = g;
 	g.ClearBorders();
 	this->main_grid = g;
 	this->has_solved=false;
 	wxLogStatus(_T(""));
-	Refresh();
+	Refresh(false);
 }
 
 wxPoint MainFrame::GetGridCoords(wxPoint p)
@@ -554,7 +576,7 @@ wxPoint MainFrame::GetGridCoords(wxPoint p)
 	double px,py;
 	px = 2.0 * (p.x - this->origin.x ) / this->cell_size;
 	py = 2.0 * (p.y - this->origin.y ) / this->cell_size;
-	wxPoint gp(wxRound(px),wxRound(py));
+	wxPoint gp = wxPoint(round(px),round(py));
 	return gp;
 }
 
@@ -569,7 +591,7 @@ void MainFrame::OnLeftClick(wxMouseEvent& event)
 		else if(val==1) val=0;
 		else val=SlinkerGrid::UNKNOWN;
 		this->main_grid.gridValue(p.x,p.y) = val;
-		Refresh();
+		Refresh(false);
 		CheckForSuccess();
 	}
 }
@@ -585,7 +607,7 @@ void MainFrame::OnRightClick(wxMouseEvent& event)
 		else if(val==0) val=1;
 		else val=SlinkerGrid::UNKNOWN;
 		this->main_grid.gridValue(p.x,p.y) = val;
-		Refresh();
+		Refresh(false);
 		CheckForSuccess();
 	}
 }
@@ -618,4 +640,16 @@ void MainFrame::CheckForSuccess()
 		wxMessageBox(wxT("Completed!"));
 		this->has_solved = true;
 	}
+}
+
+void MainFrame::OnSize(wxSizeEvent& event)
+{
+	this->Refresh(false);
+	event.Skip();
+}
+
+void MainFrame::OnExportLoopyPuzzleString(wxCommandEvent& event)
+{
+	wxGetTextFromUser(_T("(copy and paste this text into Loopy)"),_T("Puzzle as a Loopy format string:"),
+		wxString(this->main_grid.GetPuzzleInLoopyFormat().c_str(),wxConvUTF8));
 }
