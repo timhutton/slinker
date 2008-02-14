@@ -15,7 +15,7 @@ Slinker is available as source code, or as binaries for certain platforms.
 An early alpha of Slinker is available. You can:
   * create and solve puzzles using a set of rules
   * export puzzles as a Loopy string
-  * compute more rules, if SlinkerGrid::FindNewRules() makes sense to you
+  * compute more rules, if `SlinkerGrid::FindNewRules()` makes sense to you
 
 === Future work ===
 
