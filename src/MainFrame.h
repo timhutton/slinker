@@ -28,8 +28,13 @@ public:
 	/// ctor(s)
 	MainFrame(const wxString& title);
 
+	// application events
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
+	void OnSize(wxSizeEvent& event);
+
+	// file menu
+	void OnExportLoopyPuzzleString(wxCommandEvent& event);
 	
 	// actions menu
 	void OnSearchForSolutions(wxCommandEvent& event);
