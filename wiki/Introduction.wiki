@@ -1,6 +1,8 @@
 === Summary ===
 
-Slinker is an attempt to capture the best way to generate slitherlink-type puzzles. Slitherlink is probably a trademark of Nicoli ([http://www.nicoli.co.jp nicoli.co.jp]) who invented the puzzle, so go to them if you want to buy genuine quality puzzles.
+Slinker is an attempt to capture the best way to generate slitherlink-type puzzles. 
+
+(Slitherlink is probably a trademark of Nicoli ([http://www.nicoli.co.jp nicoli.co.jp]) who invented the puzzle, so go to them if you want to buy genuine quality puzzles.)
 
 If you have any use for Slinker, please just take it all and enjoy. It's GPL'd simply to encourage this.
 
@@ -20,7 +22,11 @@ An early alpha of Slinker is available. You can:
 === Future work ===
 
   * Solver should be able to offer hints when you get stuck, by pointing out where a rule can apply.
+  * Undo/redo, fix position.
   * Puzzle creation should be faster - can we derive 'number removal' rules that tell us which numbers can be removed for a given local situation, given a set of solving rules?
   * Puzzles should make more use of the harder rules - rather than removing numbers at random, can we remove those that leave the puzzle only solvable using more complex rules?
-  * Export as full Loopy format.
+  * Export/import as full Loopy format.
   * Import a Loopy puzzle and attempt to solve it given a ruleset.
+  * Need to add option to make a puzzle that would require highlander rules, and also make a list of highlander rules (how?).
+  * May want to make 'special situation' puzzles - e.g. those involving only '2's, or those with certain areas empty. How to allow the user to do this? Or provide the programmer with tools to do this?
+  * Analysis of puzzle difficulty - max/average level of rules required to solve, need for highlander, etc.?
