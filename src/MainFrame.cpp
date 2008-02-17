@@ -17,6 +17,9 @@
 	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "wxWidgets_standard_headers.h"
+#include <wx/choicdlg.h>
+
 #include "MainFrame.h"
 #include "IDs.h"
 
@@ -25,7 +28,7 @@
 #include <sstream>
 using namespace std;
 
-#include <math.h>
+#include <wx/numdlg.h>
 
 // the event tables connect the wxWidgets events with the functions (event
 // handlers) which process them. It can be also done at run-time, but for the
@@ -44,11 +47,12 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	// tools menu
 	EVT_MENU(ID::DemonstrateLoopGrowthRules,MainFrame::OnDemonstrateLoopGrowthRules)
 	EVT_MENU(ID::MakeAnEasyPuzzle,MainFrame::OnMakeAnEasyPuzzle)
+	EVT_MENU(ID::AnalyzePuzzleDifficulty,MainFrame::OnAnalyzePuzzleDifficulty)
 
 	// actions menu
 	EVT_MENU(ID::SearchForSolutions, MainFrame::OnSearchForSolutions)
-	EVT_MENU(ID::SearchForPuzzles, MainFrame::OnSearchForPuzzles)
 	EVT_MENU(ID::SearchForNewRules, MainFrame::OnSearchForNewRules)
+	EVT_MENU(ID::Clear,MainFrame::OnClear)
 	
 	// mouse events
 	EVT_LEFT_UP(MainFrame::OnLeftClick)
@@ -68,12 +72,15 @@ MainFrame::MainFrame(const wxString& title)
 	fileMenu->Append(ID::Minimal_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
 
 	wxMenu *actionsMenu = new wxMenu;
+	actionsMenu->Append(ID::Clear,_T("Clear the grid borders"));
 	actionsMenu->Append(ID::SearchForSolutions,_T("Search for solutions.."),_T("Searches for solutions"));
-	actionsMenu->Append(ID::SearchForPuzzles,_T("Search for puzzles.."),_T("Searches for puzzles with unique solutions"));
 	actionsMenu->Append(ID::SearchForNewRules,_T("Search for new rules.."),_T("Given the existing rules, searches for more complex ones"));
+
 	
 	wxMenu *toolsMenu = new wxMenu;
-	toolsMenu->Append(ID::MakeAnEasyPuzzle,_T("Make an easy puzzle"));
+	toolsMenu->Append(ID::MakeAnEasyPuzzle,_T("Make a puzzle"));
+	toolsMenu->Append(ID::AnalyzePuzzleDifficulty,_T("Analyze the current puzzle's difficulty"));
+	toolsMenu->AppendSeparator();
 	toolsMenu->Append(ID::DemonstrateLoopGrowthRules,_T("Demonstrate the growth rules"));
 	
 	// the "About" item should be in the help menu
@@ -364,19 +371,6 @@ void MainFrame::OnSearchForSolutions(wxCommandEvent &event)
 	}
 }
 
-void MainFrame::OnSearchForPuzzles(wxCommandEvent &event)
-{
-	wxBusyCursor b;
-	SlinkerGrid g(10,10);
-	vector<SlinkerGrid::TRule> rules;
-	SlinkerGrid::ReadRulesFromFile("solving_rules_3.txt",rules);
-	g.MakePuzzle(rules,false);
-	string loopy = g.GetPuzzleInLoopyFormat();
-	ofstream out("loopy.txt");
-	out << loopy;
-	wxMessageBox(wxString((loopy+"\n\n(also saved to loopy.txt)").c_str(),wxConvUTF8));
-}
-
 void MainFrame::OnSearchForNewRules(wxCommandEvent &event)
 {
 	wxBusyCursor b;
@@ -403,7 +397,8 @@ void DrawCross(wxPaintDC& dc,wxPoint p,int cell_size)
 	dc.SetPen(wxNullPen);
 }
 
-int round(float f) { return int((f-floor(f)<0.5f)?floor(f):ceil(f)); }
+// (just struggling with cross-platform issues - wxRound not available in Windows!? maybe version issues?)
+int tjh_round(float f) { return int((f-floor(f)<0.5f)?floor(f):ceil(f)); }
 
 void MainFrame::DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
 {
@@ -415,21 +410,20 @@ void MainFrame::DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
 	dc.SetBrush(*wxWHITE_BRUSH);
 	dc.DrawRectangle(0,0,dc.GetSize().x,dc.GetSize().y);
 	// draw the grid in light grey
-	dc.SetPen(wxPen(wxColour(240,240,240)));
+	const int grid_lightness = 200;
+	dc.SetPen(wxPen(wxColour(grid_lightness,grid_lightness,grid_lightness)));
 	int x,y;
 	for(x=0;x<=X;x++)
 	{
-		dc.DrawLine(origin.x + cell_size*x,
-			origin.y,
-			origin.x + cell_size*x,
-			dc.GetSize().y/2 + cell_size * Y/2+1);
-	}
-	for(y=0;y<=Y;y++)
-	{
-		dc.DrawLine(origin.x,
-			origin.y + cell_size*y,
-			dc.GetSize().x/2 + cell_size * X/2+1,
-			origin.y + cell_size*y);
+		for(y=0;y<=Y;y++)
+		{
+			if(g.IsOnGrid(2*x+1,2*y+1))
+			{
+				dc.DrawRectangle(origin.x + cell_size*x,
+					origin.y + cell_size*y,
+					cell_size+1,cell_size+1);
+			}
+		}
 	}
 	// draw the borders
 	wxPen onPen(wxColour(100,100,255),3);
@@ -437,7 +431,7 @@ void MainFrame::DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
 	{
 		for(y=0;y<2*Y+1;y++)
 		{
-			if(g.IsBorder(x,y) && g.gridValue(x,y)!=SlinkerGrid::UNKNOWN)
+			if(g.IsOnGrid(x,y) && g.IsBorder(x,y) && g.gridValue(x,y)!=SlinkerGrid::UNKNOWN)
 			{
 				if(g.gridValue(x,y)==0)
 				{
@@ -479,13 +473,13 @@ void MainFrame::DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
 	{
 		for(y=0;y<Y;y++)
 		{
-			if(g.cellValue(x,y)!=SlinkerGrid::UNKNOWN)
+			if(g.IsOnGrid(x,y) && g.cellValue(x,y)!=SlinkerGrid::UNKNOWN)
 			{
 				char c = '0'+g.cellValue(x,y);
 				wxString str(&c,wxConvUTF8,1);
 				wxSize s;
 				dc.GetTextExtent(str,&s.x,&s.y);
-				dc.DrawText(str,round(origin.x+cell_size*(x+0.5)-s.x/2),round(origin.y+cell_size*(y+0.5)-s.y/2));
+				dc.DrawText(str,tjh_round(origin.x+cell_size*(x+0.5)-s.x/2),tjh_round(origin.y+cell_size*(y+0.5)-s.y/2));
 			}
 		}
 	}
@@ -541,27 +535,36 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 	wxLogStatus(wxT(""));
 }
 
-void MainFrame::OnMakeAnEasyPuzzle(wxCommandEvent& event)
+void MainFrame::AskUserForSolvingRulesFile()
 {
-	long size = wxGetNumberFromUser(_T("What size of grid?"),_T("Size: (4-20)"),_T("hello"),7,4,20);
 	wxString filename = wxFileSelector(_T("Specify the solving rules file to use:"),0,_T("solving_rules*.txt"),_T("txt"),
 		_T("*.txt"),wxOPEN|wxFILE_MUST_EXIST);
 	if(filename.empty()) return;
-
-	wxLogStatus(_T("Working... (may take some time for larger puzzles)"));
-	wxBusyCursor busy;
-
-	vector<SlinkerGrid::TRule> rules;
 	try {
-		SlinkerGrid::ReadRulesFromFile(string(filename),rules);
+		SlinkerGrid::ReadRulesFromFile(string(filename.fn_str()),this->solving_rules);
 	}
 	catch(exception e)
 	{
 		wxMessageBox(wxString(e.what(),wxConvUTF8));
 		return;
 	}
-	SlinkerGrid g(size,size);
-	g.MakePuzzle(rules,false);
+}
+
+void MainFrame::OnMakeAnEasyPuzzle(wxCommandEvent& event)
+{
+	// ask user for the desired size
+	//wxArrayString strings;
+	//strings.Add(wxT("4"));
+	int size = 4 ;//wxGetSingleChoiceIndex(wxT("Choose:"),wxT("Size:"),strings); // problems on some platforms!?
+	// ask user for the ruleset (or just use the current one)
+	if(this->solving_rules.empty())
+		AskUserForSolvingRulesFile();
+
+	wxLogStatus(_T("Working... (may take some time for larger puzzles)"));
+	wxBusyCursor busy;
+
+	SlinkerGrid g(size,size);//,SlinkerGrid::MissingCentre);
+	g.MakePuzzle(this->solving_rules,false);
 	this->the_solution = g;
 	g.ClearBorders();
 	this->main_grid = g;
@@ -576,7 +579,7 @@ wxPoint MainFrame::GetGridCoords(wxPoint p)
 	double px,py;
 	px = 2.0 * (p.x - this->origin.x ) / this->cell_size;
 	py = 2.0 * (p.y - this->origin.y ) / this->cell_size;
-	wxPoint gp = wxPoint(round(px),round(py));
+	wxPoint gp = wxPoint(tjh_round(px),tjh_round(py));
 	return gp;
 }
 
@@ -623,7 +626,7 @@ void MainFrame::CheckForSuccess()
 	{
 		for(y=0;y<2*Y+1 && all_correct;y++)
 		{
-			if(this->main_grid.IsBorder(x,y))
+			if(this->main_grid.IsOnGrid(x,y) && this->main_grid.IsBorder(x,y))
 			{
 				if(this->the_solution.gridValue(x,y)==1)
 				{
@@ -652,4 +655,20 @@ void MainFrame::OnExportLoopyPuzzleString(wxCommandEvent& event)
 {
 	wxGetTextFromUser(_T("(copy and paste this text into Loopy)"),_T("Puzzle as a Loopy format string:"),
 		wxString(this->main_grid.GetPuzzleInLoopyFormat().c_str(),wxConvUTF8));
+}
+
+void MainFrame::OnAnalyzePuzzleDifficulty(wxCommandEvent& event)
+{
+	this->solving_rules.clear();
+	AskUserForSolvingRulesFile();
+	wxBusyCursor busy;
+	wxLogStatus(wxT("Working..."));
+	wxMessageBox(wxString(this->main_grid.GetPuzzleAnalysis(this->solving_rules).c_str(),wxConvUTF8));
+	wxLogStatus(wxT(""));
+}
+
+void MainFrame::OnClear(wxCommandEvent &event)
+{
+	this->main_grid.ClearBorders();
+	Refresh();
 }

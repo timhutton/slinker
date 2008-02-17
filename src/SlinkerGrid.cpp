@@ -17,6 +17,10 @@
 	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// if you want to use SlinkerGrid with your own interface then you can remove all wxWidgets specific things, including
+// this include and all calls to wxLogStatus and wxMessageBox.
+#include "wxWidgets_standard_headers.h"
+
 #include "SlinkerGrid.h"
 #include "next_combination.h"
 
@@ -30,11 +34,10 @@ using namespace std;
 #include <stdlib.h>
 #include <time.h>
 
-// if you want to use SlinkerGrid with your own interface then you can remove all wxWidgets specific things, including
-// this include and all calls to wxLogStatus and wxMessageBox.
-#include "wxWidgets_standard_headers.h"
-
 /// ---------- statics -------------
+
+const int SlinkerGrid::UNKNOWN = -1;
+// (we should be able to put this value in the header file but gcc doesn't like it)
 
 const int SlinkerGrid::NHOOD[4][2] = { {-1,0}, { 0,-1}, {1,0}, {0,1} };
 
@@ -474,7 +477,7 @@ void SlinkerGrid::Clear()
 	int x;
 	for(x=0;x<2*X+1;x++)
 	{
-		fill(cells[x].begin(),cells[x].end(),UNKNOWN);
+		fill(cells[x].begin(),cells[x].end(),UNKNOWN); 
 	}
 }
 
@@ -485,7 +488,7 @@ void SlinkerGrid::ClearBorders()
 	{
 		for(y=0;y<2*Y+1;y++)
 		{
-			if(IsBorder(x,y))
+			if(IsOnGrid(x,y) && IsBorder(x,y))
 				this->cells[x][y] = UNKNOWN;
 		}
 	}
@@ -656,11 +659,12 @@ bool SlinkerGrid::HasLoop()
 	return found_a_loop;
 }
 
-std::vector<SlinkerGrid> SlinkerGrid::FindSolutions(const vector<TRule> &rules,bool guessing_allowed,int max_n_wanted_solutions)
+std::vector<SlinkerGrid> SlinkerGrid::FindSolutions(const vector<TRule> &rules,bool guessing_allowed,int max_n_wanted_solutions) const
 {
 	// find some solutions
 	vector<SlinkerGrid> solutions;
-	FollowPossibilities(rules,solutions,guessing_allowed,max_n_wanted_solutions);
+	SlinkerGrid g(*this);
+	g.FollowPossibilities(rules,solutions,guessing_allowed,max_n_wanted_solutions);
 	return solutions;
 }
 
@@ -1154,7 +1158,7 @@ void SlinkerGrid::GetElementarySolvingRules(vector<TRule> &rules)
 	// This is a compressed set of rules - using contradictions to reduce the number of rules to
 	// a minimum (8). You can use this set with FindNewRules to find more, and FindNewRules forbids small loops, 
 	// so together with that heuristic, these 8 rules give you the seed to find *all* slitherlink rules, up to
-	// whatever size you like.
+	// whatever rule size you like.
 	
 	// FindNewRules will give you the more familiar forms of these rules, without contradictions, a set of 13. 
 	// These 13 are the ones we include in our elementary_rules.txt, simply because they are easier to understand.
@@ -1515,4 +1519,33 @@ vector<SlinkerGrid::TRule> SlinkerGrid::GetGrowthRules()
 		rules.push_back(a);
 	}
 	return rules;
+}
+
+string SlinkerGrid::GetPuzzleAnalysis(const std::vector<TRule>& solving_rules) const
+{
+	ostringstream oss;
+	SlinkerGrid g(*this);
+	g.ClearBorders();
+	vector<SlinkerGrid> no_guessing_solutions = g.FindSolutions(solving_rules,false,2);
+	if(!no_guessing_solutions.empty())
+	{
+		oss << "Puzzle can be solved with the supplied rules.\n";
+		if(no_guessing_solutions.size()==1)
+			oss << "Puzzle has a unique solution.\n";
+		else
+			oss << "Puzzle has multiple solutions.\n";
+	}
+	else
+	{
+		vector<SlinkerGrid> solutions = g.FindSolutions(solving_rules,true,2);
+		oss << "Puzzle cannot be solved with the supplied rules alone.\n";
+		if(solutions.empty())
+			oss << "Puzzle has no solutions.\n";
+		else if(solutions.size()==1)
+			oss << "Puzzle has a unique solution.\n";
+		else
+			oss << "Puzzle has multiple solutions.\n";
+	}
+	// TODO: more analysis: how many of each class of rule were used?
+	return oss.str();
 }

@@ -21,6 +21,8 @@
 
 #include "SlinkerGrid.h"
 
+#include <vector>
+
 /// the main window of the application
 class MainFrame : public wxFrame
 {
@@ -32,23 +34,26 @@ public:
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 	void OnSize(wxSizeEvent& event);
+	void OnPaint(wxPaintEvent& event);
 
 	// file menu
 	void OnExportLoopyPuzzleString(wxCommandEvent& event);
 	
 	// actions menu
 	void OnSearchForSolutions(wxCommandEvent& event);
-	void OnSearchForPuzzles(wxCommandEvent& event);
 	void OnSearchForNewRules(wxCommandEvent& event);
-	void OnPaint(wxPaintEvent& event);
+	void OnClear(wxCommandEvent &event);
 	
 	// tools menu
 	void OnDemonstrateLoopGrowthRules(wxCommandEvent& event);
 	void OnMakeAnEasyPuzzle(wxCommandEvent& event);
+	void OnAnalyzePuzzleDifficulty(wxCommandEvent& event);
 	
 	// mouse handling
 	void OnLeftClick(wxMouseEvent& event);
 	void OnRightClick(wxMouseEvent& event);
+	
+	void AskUserForSolvingRulesFile();
 	
 private: // private data
 
@@ -60,6 +65,8 @@ private: // private data
 	
 	/// we make a note if the current grid is solved once, to prevent multiple alerts
 	bool has_solved;
+	
+	std::vector<SlinkerGrid::TRule> solving_rules;
 	
 	/// the top-left corner of the grid, in pixels
 	wxPoint origin;
