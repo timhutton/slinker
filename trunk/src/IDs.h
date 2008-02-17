@@ -36,11 +36,12 @@ namespace ID
 	
 		// actions menu
 		SearchForSolutions,
-		SearchForPuzzles,
 		SearchForNewRules,
+		Clear,
 		
 		// tools menu
 		DemonstrateLoopGrowthRules,
 		MakeAnEasyPuzzle,
+		AnalyzePuzzleDifficulty,
 	};
 };
