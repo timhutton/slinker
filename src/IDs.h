@@ -43,5 +43,6 @@ namespace ID
 		DemonstrateLoopGrowthRules,
 		MakeAnEasyPuzzle,
 		AnalyzePuzzleDifficulty,
+		GiveAHint,
 	};
 };

@@ -71,6 +71,9 @@ class SlinkerGrid
 		/// return the usual 3 rules we use to grow a seed loop into a random convoluted loop for making a puzzle
 		static std::vector<TRule> GetGrowthRules();
 		
+		/// return two grids showing the before and after of a rule (required and implied elements)
+		static void GetPrintOut(const TRule& r,SlinkerGrid& req,SlinkerGrid& impl);
+		
 		/// helper functions to identify where in the grid we are
 		static bool IsOdd ( int a );
 		static bool IsEven ( int a );
@@ -158,7 +161,19 @@ class SlinkerGrid
 		/** @param solving_rules the rules that can be used in the initial stages - brute-force solving will be used too if necessary
 		*/
 		std::string GetPuzzleAnalysis(const std::vector<TRule>& solving_rules) const;
+		
+		// retrieve a valid move that can be made, if there is one
+		/** @param rules the solving rules to use
+			@param iRule on success, contains the index of the rule that can be applied
+			@param pos on success, contains the position of the rule that can be applied
+			@param iSymmetry on success, contains the symmetry (indexed into SYMMETRIES) of the rule
+			@return true if a rule can be applied, false if not
+		*/
+		bool GetAValidMove(const std::vector<TRule>& rules,int& iRule,wxPoint& pos,int& iSymmetry);
 
+		// apply a rule to the grid (assumes is applicable)
+		void ApplyRule(const TRule& rule,wxPoint& pos,int& iSymmetry);
+	
 	private: // private classes
 
 		/// a 2x2 integer matrix for reflections and quarter rotations
