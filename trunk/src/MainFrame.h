@@ -48,12 +48,13 @@ public:
 	void OnDemonstrateLoopGrowthRules(wxCommandEvent& event);
 	void OnMakeAnEasyPuzzle(wxCommandEvent& event);
 	void OnAnalyzePuzzleDifficulty(wxCommandEvent& event);
+	void OnGiveAHint(wxCommandEvent& event);
 	
 	// mouse handling
 	void OnLeftClick(wxMouseEvent& event);
 	void OnRightClick(wxMouseEvent& event);
 	
-	void AskUserForSolvingRulesFile();
+	bool AskUserForSolvingRulesFile();
 	
 private: // private data
 

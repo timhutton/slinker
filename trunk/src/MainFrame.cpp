@@ -48,6 +48,7 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	EVT_MENU(ID::DemonstrateLoopGrowthRules,MainFrame::OnDemonstrateLoopGrowthRules)
 	EVT_MENU(ID::MakeAnEasyPuzzle,MainFrame::OnMakeAnEasyPuzzle)
 	EVT_MENU(ID::AnalyzePuzzleDifficulty,MainFrame::OnAnalyzePuzzleDifficulty)
+	EVT_MENU(ID::GiveAHint,MainFrame::OnGiveAHint)
 
 	// actions menu
 	EVT_MENU(ID::SearchForSolutions, MainFrame::OnSearchForSolutions)
@@ -80,6 +81,7 @@ MainFrame::MainFrame(const wxString& title)
 	wxMenu *toolsMenu = new wxMenu;
 	toolsMenu->Append(ID::MakeAnEasyPuzzle,_T("Make a puzzle"));
 	toolsMenu->Append(ID::AnalyzePuzzleDifficulty,_T("Analyze the current puzzle's difficulty"));
+	toolsMenu->Append(ID::GiveAHint,_T("Give a hint\tF2"),_T("Show where a rule can be applied"));
 	toolsMenu->AppendSeparator();
 	toolsMenu->Append(ID::DemonstrateLoopGrowthRules,_T("Demonstrate the growth rules"));
 	
@@ -535,40 +537,91 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 	wxLogStatus(wxT(""));
 }
 
-void MainFrame::AskUserForSolvingRulesFile()
+bool MainFrame::AskUserForSolvingRulesFile()
 {
-	wxString filename = wxFileSelector(_T("Specify the solving rules file to use:"),0,_T("solving_rules*.txt"),_T("txt"),
-		_T("*.txt"),wxOPEN|wxFILE_MUST_EXIST);
-	if(filename.empty()) return;
+	wxString filename = wxFileSelector(_T("Specify the solving rules file to use:"),_T(""),_T("*.txt"),_T("txt"),
+		_T("*.txt"),wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+	if(filename.empty()) return false;
 	try {
+		this->solving_rules.clear();
 		SlinkerGrid::ReadRulesFromFile(string(filename.fn_str()),this->solving_rules);
+		return true;
 	}
 	catch(exception e)
 	{
 		wxMessageBox(wxString(e.what(),wxConvUTF8));
-		return;
+		return false;
 	}
+}
+
+// (code from wxWidgets)
+// convert wxArrayString into a wxString[] which must be delete[]d by caller
+int ConvertWXArrayToC(const wxArrayString& aChoices, wxString **choices)
+{
+    int n = aChoices.GetCount();
+    *choices = new wxString[n];
+
+    for ( int i = 0; i < n; i++ )
+    {
+        (*choices)[i] = aChoices[i];
+    }
+
+    return n;
 }
 
 void MainFrame::OnMakeAnEasyPuzzle(wxCommandEvent& event)
 {
 	// ask user for the desired size
-	//wxArrayString strings;
-	//strings.Add(wxT("4"));
-	int size = 4 ;//wxGetSingleChoiceIndex(wxT("Choose:"),wxT("Size:"),strings); // problems on some platforms!?
+	wxPoint size;
+	{
+		const int N_SIZES=7;
+		const int sizes[N_SIZES][2] = { {4,4},{5,5},{7,7},{9,9},{11,11},{15,15},{20,14} };
+		wxArrayString size_choices;
+		for(int i=0;i<N_SIZES;i++)
+		{
+			ostringstream oss;
+			oss << sizes[i][0] << "x" << sizes[i][1];
+			size_choices.Add(wxString(oss.str().c_str(),wxConvUTF8));
+		}
+		//size_choices.Add(_T("Custom")); TODO
+		int iSizeChoice = wxGetSingleChoiceIndex(_T("What size of puzzle do you want?"),_T("Specify size:"),size_choices);
+		if(iSizeChoice==-1) return; // user cancelled
+		//if(iSizeChoice<N_SIZES)
+			size = wxPoint(sizes[iSizeChoice][0],sizes[iSizeChoice][1]);
+		//else {
+			// TODO: support custom size
+		//}
+	}
 	// ask user for the ruleset (or just use the current one)
-	if(this->solving_rules.empty())
-		AskUserForSolvingRulesFile();
+	if(!AskUserForSolvingRulesFile()) return;
+	// ask user whether brute-force solving is also allowed
+	bool guessing_allowed;
+	{
+		wxArrayString choices;
+		choices.Add(_T("no brute force - puzzles will be fully deducible, and easier"));
+		choices.Add(_T("brute-force used - puzzles will be harder to solve and may require back-tracking"));
+		wxString *strings;
+		int n = ConvertWXArrayToC(choices, &strings);
+		wxSingleChoiceDialog dialog(this, _T("Select the puzzle type:"), _T("Select from:"), n, strings);
+		dialog.SetSize(600,200);
+		if ( dialog.ShowModal() == wxID_OK )
+			guessing_allowed = (dialog.GetSelection()==1);
+		else
+			return; // user cancelled
+		delete []strings;
+		// (wxGetSingleChoiceIndex ignores the size parameters passed)
+    }
 
 	wxLogStatus(_T("Working... (may take some time for larger puzzles)"));
 	wxBusyCursor busy;
 
-	SlinkerGrid g(size,size);//,SlinkerGrid::MissingCentre);
-	g.MakePuzzle(this->solving_rules,false);
+	SlinkerGrid g(size.x,size.y);//,SlinkerGrid::MissingCentre);
+	g.MakePuzzle(this->solving_rules,guessing_allowed);
 	this->the_solution = g;
 	g.ClearBorders();
 	this->main_grid = g;
 	this->has_solved=false;
+	
 	wxLogStatus(_T(""));
 	Refresh(false);
 }
@@ -659,8 +712,7 @@ void MainFrame::OnExportLoopyPuzzleString(wxCommandEvent& event)
 
 void MainFrame::OnAnalyzePuzzleDifficulty(wxCommandEvent& event)
 {
-	this->solving_rules.clear();
-	AskUserForSolvingRulesFile();
+	if(!AskUserForSolvingRulesFile()) return;
 	wxBusyCursor busy;
 	wxLogStatus(wxT("Working..."));
 	wxMessageBox(wxString(this->main_grid.GetPuzzleAnalysis(this->solving_rules).c_str(),wxConvUTF8));
@@ -671,4 +723,28 @@ void MainFrame::OnClear(wxCommandEvent &event)
 {
 	this->main_grid.ClearBorders();
 	Refresh();
+}
+
+void MainFrame::OnGiveAHint(wxCommandEvent& event)
+{
+	if(this->solving_rules.empty() && !AskUserForSolvingRulesFile()) return;
+	int iRule,iSymmetry;
+	wxPoint pos;
+	bool found_one = this->main_grid.GetAValidMove(this->solving_rules,iRule,pos,iSymmetry);
+	if(found_one)
+	{
+		this->main_grid.ApplyRule(this->solving_rules[iRule],pos,iSymmetry);
+		Refresh(false);
+		Update();
+		if(false) // show the user the rule we used
+		{
+			SlinkerGrid req(4,4),impl(4,4);
+			SlinkerGrid::GetPrintOut(this->solving_rules[iRule],req,impl);
+			ostringstream oss;
+			oss << req.GetPrintOut() << "\n\n (" << pos.x << "," << pos.y << "\nsymm:" << iSymmetry;
+			wxMessageBox(wxString(oss.str().c_str(),wxConvUTF8)); // TODO: not much use in a proportional font...
+		}
+	}
+	else
+		wxMessageBox(_T("Found no rule that could be applied."));
 }

@@ -509,11 +509,11 @@ bool SlinkerGrid::ApplyRules(const vector<TRule>& rules,vector<int*> &changed)
 		did_something = false;
 		for(rule_it = rules.begin();rule_it!=rules.end();rule_it++)
 		{
-			for(x=0;x<2*X+1;x++)
+			for(x=-1;x<2*X+1+1;x++) // consider rule applications to the cells around the edge too (see the elementary rules)
 			{
-				for(y=0;y<2*Y+1;y++)
+				for(y=-1;y<2*Y+1+1;y++)
 				{
-					if(!IsCell(x,y) || !IsOnGrid(x,y)) continue;
+					if(!IsCell(x+2,y+2)) continue;
 					// does the rule apply here (centred on cell x,y) in any orientation?
 					for(iSymm=0;iSymm<N_SYMMETRIES;iSymm++)
 					{
@@ -522,7 +522,7 @@ bool SlinkerGrid::ApplyRules(const vector<TRule>& rules,vector<int*> &changed)
 						{
 							tx = x + SYMMETRIES[iSymm].mX(it->x,it->y);
 							ty = y + SYMMETRIES[iSymm].mY(it->x,it->y);
-							if( !( (it->val==0 && !IsOnGrid(tx,ty)) || 
+							if( !( (it->val==0 && IsBorder(tx,ty) && !IsOnGrid(tx,ty)) || 
 								(IsOnGrid(tx,ty) && cells[tx][ty]==it->val) ) )
 									can_apply = false;
 						}
@@ -1232,6 +1232,45 @@ void SlinkerGrid::GetElementarySolvingRules(vector<TRule> &rules)
 	}
 }
 
+void SlinkerGrid::GetPrintOut(const TRule& r,SlinkerGrid& req,SlinkerGrid& impl)
+{
+	// first work out the bounding box for the rule
+	int left=INT_MAX,right=-INT_MAX,top=INT_MAX,bottom=-INT_MAX;
+	vector<TElement>::const_iterator it;
+	for(it=r.required.begin();it!=r.required.end();it++)
+	{
+		if(it->x<left) left=it->x;
+		if(it->y<top) top=it->y;
+		if(it->x>right) right=it->x;
+		if(it->y>bottom) bottom=it->y;
+	}
+	for(it=r.implied.begin();it!=r.implied.end();it++)
+	{
+		if(it->x<left) left=it->x;
+		if(it->y<top) top=it->y;
+		if(it->x>right) right=it->x;
+		if(it->y>bottom) bottom=it->y;
+	}
+	int width = (right-left-1)/2+4;
+	int height = (bottom-top-1)/2+4;
+	int cx = 2-left;
+	int cy = 2-top;
+	if(IsDot(cx,cy)) { cx++; cy++; }
+	else if(IsHorizontalBorder(cx,cy)) { cy++; }
+	else if(IsVerticalBorder(cx,cy)) { cx++; }
+	req = SlinkerGrid(width,height);
+	impl = SlinkerGrid(width,height);
+	for(it=r.required.begin();it!=r.required.end();it++)
+	{
+		req.cells[cx+it->x][cy+it->y]=it->val; 
+		impl.cells[cx+it->x][cy+it->y]=it->val;
+	}
+	for(it=r.implied.begin();it!=r.implied.end();it++)
+	{
+		impl.cells[cx+it->x][cy+it->y]=it->val;
+	}
+}
+
 void SlinkerGrid::WriteRulesToFile(const vector<TRule> &rules,const string &filename) // static
 {
 	/* File format example:
@@ -1270,58 +1309,29 @@ void SlinkerGrid::WriteRulesToFile(const vector<TRule> &rules,const string &file
 	ofstream out(filename.c_str());
 	vector<TRule>::const_iterator rules_it;
 	vector<TElement>::const_iterator it;
+	SlinkerGrid req(4,4),impl(4,4);
 	for(rules_it=rules.begin();rules_it!=rules.end();rules_it++)
 	{
-		// first work out the bounding box for the rule
-		int left=INT_MAX,right=-INT_MAX,top=INT_MAX,bottom=-INT_MAX;
-		for(it=rules_it->required.begin();it!=rules_it->required.end();it++)
-		{
-			if(it->x<left) left=it->x;
-			if(it->y<top) top=it->y;
-			if(it->x>right) right=it->x;
-			if(it->y>bottom) bottom=it->y;
-		}
-		for(it=rules_it->implied.begin();it!=rules_it->implied.end();it++)
-		{
-			if(it->x<left) left=it->x;
-			if(it->y<top) top=it->y;
-			if(it->x>right) right=it->x;
-			if(it->y>bottom) bottom=it->y;
-		}
-		int width = (right-left-1)/2+4;
-		int height = (bottom-top-1)/2+4;
-		int cx = 2-left;
-		int cy = 2-top;
-		if(IsDot(cx,cy)) { cx++; cy++; }
-		else if(IsHorizontalBorder(cx,cy)) { cy++; }
-		else if(IsVerticalBorder(cx,cy)) { cx++; }
-		SlinkerGrid req(width,height),impl(width,height);
+		GetPrintOut(*rules_it,req,impl);
 		// write out the rule in machine-readable format (and draw the rule onto two grids)
 		out << "#---------- Rule " << rules_it-rules.begin()+1 << ": --------------\nrequired:\n";
 		for(it=rules_it->required.begin();it!=rules_it->required.end();it++)
-		{
 			out << it->x << "," << it->y << "," << it->val << "\n";
-			req.cells[cx+it->x][cy+it->y]=it->val; 
-			impl.cells[cx+it->x][cy+it->y]=it->val;
-		}
 		out << "implied:\n";
 		for(it=rules_it->implied.begin();it!=rules_it->implied.end();it++)
-		{
 			out << it->x << "," << it->y << "," << it->val << "\n";
-			impl.cells[cx+it->x][cy+it->y]=it->val;
-		}
 		// draw a visual depiction of the rule for humans
 		{
 			istringstream req_text(req.GetPrintOut()),impl_text(impl.GetPrintOut());
 			out << "\n";
 			int y;
 			string s;
-			for(y=0;y<2*height+1;y++)
+			for(y=0;y<2*req.GetY()+1;y++)
 			{
 				out << "#         ";
 				getline(req_text,s);
 				out << s;
-				if(y==height) out << "       =>         ";
+				if(y==req.GetY()) out << "       =>         ";
 				else out << "                  ";
 				getline(impl_text,s);
 				out << s << "\n";
@@ -1548,4 +1558,59 @@ string SlinkerGrid::GetPuzzleAnalysis(const std::vector<TRule>& solving_rules) c
 	}
 	// TODO: more analysis: how many of each class of rule were used?
 	return oss.str();
+}
+
+void SlinkerGrid::ApplyRule(const TRule& rule,wxPoint& pos,int& iSymmetry)
+{
+	int tx,ty;
+	for(vector<TElement>::const_iterator it = rule.implied.begin();it!=rule.implied.end();it++)
+	{
+		tx = pos.x + SYMMETRIES[iSymmetry].mX(it->x,it->y);
+		ty = pos.y + SYMMETRIES[iSymmetry].mY(it->x,it->y);
+		if(IsOnGrid(tx,ty))
+			cells[tx][ty] = it->val;
+	}
+}
+
+bool SlinkerGrid::GetAValidMove(const std::vector<TRule>& rules,int& iRule,wxPoint& pos,int& iSymmetry)
+{
+	// TODO: should code-share with ApplyRules if can maintain efficiency
+	vector<TElement>::const_iterator it;
+	bool can_apply,is_useful;
+	int tx,ty;
+	for(iRule=0;iRule<rules.size();iRule++)
+	{
+		const TRule& rule = rules[iRule];
+		for(pos.x=-1;pos.x<(2*X+1+1);pos.x++)
+		{
+			for(pos.y=-1;pos.y<(2*Y+1+1);pos.y++)
+			{
+				if(!IsCell(pos.x+2,pos.y+2)) continue;
+				// does the rule apply here (centred on cell x,y) in any orientation?
+				for(iSymmetry=0;iSymmetry<N_SYMMETRIES;iSymmetry++)
+				{
+					can_apply = true; // until found otherwise
+					for(it=rule.required.begin();it!=rule.required.end() && can_apply;it++)
+					{
+						tx = pos.x + SYMMETRIES[iSymmetry].mX(it->x,it->y);
+						ty = pos.y + SYMMETRIES[iSymmetry].mY(it->x,it->y);
+						if( !( (it->val==0 && IsBorder(tx,ty) && !IsOnGrid(tx,ty)) || 
+							(IsOnGrid(tx,ty) && cells[tx][ty]==it->val) ) )
+								can_apply = false;
+
+					}
+					if(!can_apply) continue;
+					for(it = rule.implied.begin();it!=rule.implied.end();it++)
+					{
+						tx = pos.x + SYMMETRIES[iSymmetry].mX(it->x,it->y);
+						ty = pos.y + SYMMETRIES[iSymmetry].mY(it->x,it->y);
+						if(!IsOnGrid(tx,ty)) continue;
+						if(cells[tx][ty]==UNKNOWN)
+							return true; // this rule can apply and is useful (changes something)
+					}
+				}
+			}
+		}
+	}
+	return false; // found nothing to apply
 }
