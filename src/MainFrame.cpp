@@ -43,10 +43,11 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 
 	// file menu
 	EVT_MENU(ID::ExportLoopyPuzzleString,MainFrame::OnExportLoopyPuzzleString)
+	EVT_MENU(ID::ImportLoopyPuzzleString,MainFrame::OnImportLoopyPuzzleString)
 	
 	// tools menu
 	EVT_MENU(ID::DemonstrateLoopGrowthRules,MainFrame::OnDemonstrateLoopGrowthRules)
-	EVT_MENU(ID::MakeAnEasyPuzzle,MainFrame::OnMakeAnEasyPuzzle)
+	EVT_MENU(ID::MakeAPuzzle,MainFrame::OnMakeAPuzzle)
 	EVT_MENU(ID::AnalyzePuzzleDifficulty,MainFrame::OnAnalyzePuzzleDifficulty)
 	EVT_MENU(ID::GiveAHint,MainFrame::OnGiveAHint)
 
@@ -69,6 +70,7 @@ MainFrame::MainFrame(const wxString& title)
 	// create a menu bar
 	wxMenu *fileMenu = new wxMenu;
 	fileMenu->Append(ID::ExportLoopyPuzzleString,_T("Export puzzle as a Loopy format string"));
+	fileMenu->Append(ID::ImportLoopyPuzzleString,_T("Import a puzzle from a Loopy format string"));
 	fileMenu->AppendSeparator();
 	fileMenu->Append(ID::Minimal_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
 
@@ -79,7 +81,7 @@ MainFrame::MainFrame(const wxString& title)
 
 	
 	wxMenu *toolsMenu = new wxMenu;
-	toolsMenu->Append(ID::MakeAnEasyPuzzle,_T("Make a puzzle"));
+	toolsMenu->Append(ID::MakeAPuzzle,_T("Make a puzzle"));
 	toolsMenu->Append(ID::AnalyzePuzzleDifficulty,_T("Analyze the current puzzle's difficulty"));
 	toolsMenu->Append(ID::GiveAHint,_T("Give a hint\tF2"),_T("Show where a rule can be applied"));
 	toolsMenu->AppendSeparator();
@@ -540,7 +542,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 bool MainFrame::AskUserForSolvingRulesFile()
 {
 	wxString filename = wxFileSelector(_T("Specify the solving rules file to use:"),_T(""),_T("*.txt"),_T("txt"),
-		_T("*.txt"),wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+		_T("*.txt"),wxOPEN|wxFILE_MUST_EXIST);
 	if(filename.empty()) return false;
 	try {
 		this->solving_rules.clear();
@@ -569,7 +571,7 @@ int ConvertWXArrayToC(const wxArrayString& aChoices, wxString **choices)
     return n;
 }
 
-void MainFrame::OnMakeAnEasyPuzzle(wxCommandEvent& event)
+void MainFrame::OnMakeAPuzzle(wxCommandEvent& event)
 {
 	// ask user for the desired size
 	wxPoint size;
@@ -592,6 +594,31 @@ void MainFrame::OnMakeAnEasyPuzzle(wxCommandEvent& event)
 			// TODO: support custom size
 		//}
 	}
+	SlinkerGrid::TGridShape grid_shape;
+	{
+		wxArrayString choices;
+		choices.Add(_T("rectangle - the standard shape"));
+		choices.Add(_T("missing centre - a rectangle with a missing central area"));
+		choices.Add(_T("disk - the grid squares lie inside a circle"));
+		wxString *strings;
+		int n = ConvertWXArrayToC(choices, &strings);
+		wxSingleChoiceDialog dialog(this, _T("Select the puzzle shape:"), _T("Select from:"), n, strings);
+		dialog.SetSize(400,200);
+		if ( dialog.ShowModal() == wxID_OK )
+		{
+			switch(dialog.GetSelection())
+			{
+				default:
+				case 0: grid_shape = SlinkerGrid::RectangleShape; break;
+				case 1: grid_shape = SlinkerGrid::MissingCentre; break;
+				case 2: grid_shape = SlinkerGrid::CircleShape; break;
+			}
+		}
+		else
+			return; // user cancelled
+		delete []strings;
+		// (wxGetSingleChoiceIndex ignores the size parameters passed)
+    }
 	// ask user for the ruleset (or just use the current one)
 	if(!AskUserForSolvingRulesFile()) return;
 	// ask user whether brute-force solving is also allowed
@@ -615,7 +642,7 @@ void MainFrame::OnMakeAnEasyPuzzle(wxCommandEvent& event)
 	wxLogStatus(_T("Working... (may take some time for larger puzzles)"));
 	wxBusyCursor busy;
 
-	SlinkerGrid g(size.x,size.y);//,SlinkerGrid::MissingCentre);
+	SlinkerGrid g(size.x,size.y,grid_shape);
 	g.MakePuzzle(this->solving_rules,guessing_allowed);
 	this->the_solution = g;
 	g.ClearBorders();
@@ -674,6 +701,7 @@ void MainFrame::CheckForSuccess()
 	bool all_correct=true;
 	const int X = this->main_grid.GetX();
 	const int Y = this->main_grid.GetY();
+	if(this->the_solution.GetX()!=X || this->the_solution.GetY()!=Y) return; // we haven't been given the solution
 	int x,y;
 	for(x=0;x<2*X+1 && all_correct;x++)
 	{
@@ -712,7 +740,8 @@ void MainFrame::OnExportLoopyPuzzleString(wxCommandEvent& event)
 
 void MainFrame::OnAnalyzePuzzleDifficulty(wxCommandEvent& event)
 {
-	if(!AskUserForSolvingRulesFile()) return;
+	this->solving_rules.clear();
+	AskUserForSolvingRulesFile(); // (they can cancel, and we will try to solve without rules, which might be slow)
 	wxBusyCursor busy;
 	wxLogStatus(wxT("Working..."));
 	wxMessageBox(wxString(this->main_grid.GetPuzzleAnalysis(this->solving_rules).c_str(),wxConvUTF8));
@@ -738,7 +767,7 @@ void MainFrame::OnGiveAHint(wxCommandEvent& event)
 		Update();
 		if(false) // show the user the rule we used
 		{
-			SlinkerGrid req(4,4),impl(4,4);
+			SlinkerGrid req,impl;
 			SlinkerGrid::GetPrintOut(this->solving_rules[iRule],req,impl);
 			ostringstream oss;
 			oss << req.GetPrintOut() << "\n\n (" << pos.x << "," << pos.y << "\nsymm:" << iSymmetry;
@@ -747,4 +776,13 @@ void MainFrame::OnGiveAHint(wxCommandEvent& event)
 	}
 	else
 		wxMessageBox(_T("Found no rule that could be applied."));
+}
+
+void MainFrame::OnImportLoopyPuzzleString(wxCommandEvent& event)
+{
+	wxString s = wxGetTextFromUser(_T("(paste the Loopy puzzle string here)"),_T("Import puzzle from a Loopy format string:"),
+		_T(""));
+	this->main_grid = SlinkerGrid::ReadFromLoopyFormat(string(s.fn_str()));
+	this->the_solution = SlinkerGrid(); // just so we know it is empty
+	Refresh(false);
 }

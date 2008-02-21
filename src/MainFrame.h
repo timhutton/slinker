@@ -38,6 +38,7 @@ public:
 
 	// file menu
 	void OnExportLoopyPuzzleString(wxCommandEvent& event);
+	void OnImportLoopyPuzzleString(wxCommandEvent& event);
 	
 	// actions menu
 	void OnSearchForSolutions(wxCommandEvent& event);
@@ -46,7 +47,7 @@ public:
 	
 	// tools menu
 	void OnDemonstrateLoopGrowthRules(wxCommandEvent& event);
-	void OnMakeAnEasyPuzzle(wxCommandEvent& event);
+	void OnMakeAPuzzle(wxCommandEvent& event);
 	void OnAnalyzePuzzleDifficulty(wxCommandEvent& event);
 	void OnGiveAHint(wxCommandEvent& event);
 	
