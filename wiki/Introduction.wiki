@@ -6,6 +6,8 @@ Slinker is an attempt to capture the best way to generate slitherlink-type puzzl
 
 If you have any use for Slinker, please just take it all and enjoy. It's GPL'd simply to encourage this.
 
+Other Slitherlink puzzle generators: [http://www.chiark.greenend.org.uk/~sgtatham/puzzles/ Loopy], [http://www.deadofnight.org/?x=other Loop-de-Loop], [http://inezha.com/p/7353751/item45?hl=en KrazyDad]. Please tell me of more.
+
 === Platforms ===
 
 Slinker can be compiled for any platform supporting [http://www.wxwidgets.org/ wxWidgets] and [http://www.cmake.org CMake] - including Linux, Windows and Mac. 
