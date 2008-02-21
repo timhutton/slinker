@@ -6,7 +6,7 @@ Slinker is an attempt to capture the best way to generate slitherlink-type puzzl
 
 If you have any use for Slinker, please just take it all and enjoy. It's GPL'd simply to encourage this.
 
-Other Slitherlink puzzle generators: [http://www.chiark.greenend.org.uk/~sgtatham/puzzles/ Loopy], [http://www.deadofnight.org/?x=other Loop-de-Loop], [http://www.krazydad.com/slitherlink/ KrazyDad]. Please tell me of more.
+Other Slitherlink puzzle generators: [http://www.chiark.greenend.org.uk/~sgtatham/puzzles/ Loopy], [http://www.deadofnight.org/?x=other Loop-de-Loop], [http://www.krazydad.com/slitherlink/ KrazyDad] (Loopy code adapted for hexagonal and Penrose grids). Please tell me of more.
 
 === Platforms ===
 
