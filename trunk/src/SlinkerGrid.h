@@ -91,6 +91,7 @@ class SlinkerGrid
 		* @param gs shape of the grid
 		*/
 		SlinkerGrid (int x,int y,TGridShape gs = RectangleShape);
+		SlinkerGrid ();
 
 		SlinkerGrid ( const SlinkerGrid& g );
 		SlinkerGrid& operator= ( const SlinkerGrid& g );

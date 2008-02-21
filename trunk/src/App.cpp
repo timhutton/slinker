@@ -23,6 +23,10 @@
 #include <exception>
 using namespace std;
 
+// some things for random number generation
+#include <stdlib.h>
+#include <time.h>
+
 // Create a new application object: this macro will allow wxWidgets to create
 // the application object during program execution (it's better than using a
 // static object for many reasons) and also implements the accessor function
@@ -44,6 +48,9 @@ bool App::OnInit()
 	// and show it (the frames, unlike simple controls, are not shown when
 	// created initially)
 	frame->Show(true);
+	
+	// seed a pseudo random number generator so we get different puzzles
+	srand((unsigned int)time(NULL));
 
 	// success: App::OnRun() will be called which will enter the main message
 	// loop and the application will run. If we returned false here, the

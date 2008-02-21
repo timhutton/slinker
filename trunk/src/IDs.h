@@ -33,6 +33,7 @@ namespace ID
 
 		// file menu
 		ExportLoopyPuzzleString,
+		ImportLoopyPuzzleString,
 	
 		// actions menu
 		SearchForSolutions,
@@ -41,7 +42,7 @@ namespace ID
 		
 		// tools menu
 		DemonstrateLoopGrowthRules,
-		MakeAnEasyPuzzle,
+		MakeAPuzzle,
 		AnalyzePuzzleDifficulty,
 		GiveAHint,
 	};

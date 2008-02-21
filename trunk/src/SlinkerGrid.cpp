@@ -30,10 +30,6 @@
 #include <fstream>
 using namespace std;
 
-// some things for random number generation
-#include <stdlib.h>
-#include <time.h>
-
 /// ---------- statics -------------
 
 const int SlinkerGrid::UNKNOWN = -1;
@@ -62,18 +58,20 @@ bool SlinkerGrid::IsVerticalBorder(int x,int y) { return( IsEven(x) && IsOdd(y) 
 
 // ---------------------------
 
+SlinkerGrid::SlinkerGrid() : X(0),Y(0),grid_shape(RectangleShape)
+{
+}
+
 SlinkerGrid::SlinkerGrid(int x,int y,TGridShape gs) 
 	: X(x), Y(y), 
 	cells(2*X+1,vector<int>(2*Y+1,UNKNOWN)), // init array of values all filled with UNKNOWN
 	grid_shape(gs)
 {
-	srand((unsigned int)time(NULL));
 }
 
 SlinkerGrid::SlinkerGrid(const SlinkerGrid& g)
 	: X(g.X),Y(g.Y),cells(g.cells),grid_shape(g.grid_shape)
 {
-	srand((unsigned int)time(NULL));
 }
 
 SlinkerGrid& SlinkerGrid::operator=(const SlinkerGrid& g)
