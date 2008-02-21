@@ -14,19 +14,21 @@ Slinker is available as source code, or as binaries for certain platforms.
 
 === Status ===
 
-An early alpha of Slinker is available. You can:
+An early alpha of Slinker is available. The source code version can:
   * create and solve puzzles using a set of rules
-  * export puzzles as a Loopy string
+  * verify that puzzles have a unique solution
+  * decide whether a puzzle can be directly solved with a given ruleset.
+  * can show where rules from the set chosen apply
+  * import/export puzzles as a Loopy string
   * compute more rules, if `SlinkerGrid::FindNewRules()` makes sense to you
 
 === Future work ===
 
-  * Solver should be able to offer hints when you get stuck, by pointing out where a rule can apply.
   * Undo/redo, fix position.
   * Puzzle creation should be faster - can we derive 'number removal' rules that tell us which numbers can be removed for a given local situation, given a set of solving rules?
+  * Puzzle solving should be faster - solving a 40x30 takes a long time, even with a 4-element ruleset.
   * Puzzles should make more use of the harder rules - rather than removing numbers at random, can we remove those that leave the puzzle only solvable using more complex rules?
   * Export/import as full Loopy format.
-  * Import a Loopy puzzle and attempt to solve it given a ruleset.
   * Need to add option to make a puzzle that would require highlander rules, and also make a list of highlander rules (how?).
   * May want to make 'special situation' puzzles - e.g. those involving only '2's, or those with certain areas empty. How to allow the user to do this? Or provide the programmer with tools to do this?
-  * Analysis of puzzle difficulty - max/average level of rules required to solve, need for highlander, etc.?
+  * Analysis of puzzle difficulty - max/average level of rules required to solve, need for highlander, etc.? Ideally we'd like to be able to rate every puzzle as scientifically as possible, and seek consensus on the method. 
