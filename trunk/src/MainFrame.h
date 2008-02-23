@@ -18,7 +18,6 @@
 */
 
 #include "wxWidgets_standard_headers.h"
-
 #include "SlinkerGrid.h"
 
 #include <vector>
@@ -68,17 +67,20 @@ private: // private data
 	/// we make a note if the current grid is solved once, to prevent multiple alerts
 	bool has_solved;
 	
+	/// a set of solving rules that were last loaded
 	std::vector<SlinkerGrid::TRule> solving_rules;
 	
-	/// the top-left corner of the grid, in pixels
+	/// the top-left corner of the grid as last drawn, in pixels
 	wxPoint origin;
+	/// the cell edge length of the grid as last drawn, in pixels
 	int cell_size;
 	
 private: // private methods
 	
-	void DrawGrid(const SlinkerGrid& g,wxPaintDC& dc);
-	void ComputeDrawingCoordinates(const SlinkerGrid& g,wxPaintDC& dc);
+	/// using the current drawing parameters, compute the grid coordinates of the supplied point (usually a mouse click)
 	wxPoint GetGridCoords(wxPoint p);
+	
+	/// does the grid now match the stored solution? if so then tell the user and make a note that this has happened
 	void CheckForSuccess();
 
 	// any class wishing to process wxWidgets events must use this macro

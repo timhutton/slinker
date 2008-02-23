@@ -10,6 +10,10 @@ SET(SRCS_Slinker
   src/MainFrame.h
   src/SlinkerGrid.cpp
   src/SlinkerGrid.h
+  src/RuleDepictionDialog.cpp
+  src/RuleDepictionDialog.h
+  src/DrawSlinkerGrid.cpp
+  src/DrawSlinkerGrid.h
   src/IDs.h
   src/next_combination.h
   src/wxWidgets_standard_headers.h

@@ -583,7 +583,7 @@ void SlinkerGrid::FollowPossibilities(const std::vector<TRule> &solving_rules, v
 			{
 				for(y=0;(y<2*Y+1 && !found_one);y++)
 				{
-					if(!IsBorder(x,y) || cells[x][y]!=UNKNOWN) 
+					if(!IsBorder(x,y) || !IsOnGrid(x,y) || cells[x][y]!=UNKNOWN) 
 						continue;
 					found_one=true;
 					for(onoff=0;onoff<=1;onoff++)
@@ -1230,7 +1230,7 @@ void SlinkerGrid::GetElementarySolvingRules(vector<TRule> &rules)
 	}
 }
 
-void SlinkerGrid::GetPrintOut(const TRule& r,SlinkerGrid& req,SlinkerGrid& impl)
+void SlinkerGrid::GetBeforeAndAfterGridsForRule(const TRule& r,SlinkerGrid& req,SlinkerGrid& impl)
 {
 	// first work out the bounding box for the rule
 	int left=INT_MAX,right=-INT_MAX,top=INT_MAX,bottom=-INT_MAX;
@@ -1310,7 +1310,7 @@ void SlinkerGrid::WriteRulesToFile(const vector<TRule> &rules,const string &file
 	SlinkerGrid req(4,4),impl(4,4);
 	for(rules_it=rules.begin();rules_it!=rules.end();rules_it++)
 	{
-		GetPrintOut(*rules_it,req,impl);
+		SlinkerGrid::GetBeforeAndAfterGridsForRule(*rules_it,req,impl);
 		// write out the rule in machine-readable format (and draw the rule onto two grids)
 		out << "#---------- Rule " << rules_it-rules.begin()+1 << ": --------------\nrequired:\n";
 		for(it=rules_it->required.begin();it!=rules_it->required.end();it++)

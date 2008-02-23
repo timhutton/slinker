@@ -17,6 +17,9 @@
 	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef __SLINKERGRID_H__
+#define __SLINKERGRID_H__
+
 #include <vector>
 #include <string>
 
@@ -72,7 +75,7 @@ class SlinkerGrid
 		static std::vector<TRule> GetGrowthRules();
 		
 		/// return two grids showing the before and after of a rule (required and implied elements)
-		static void GetPrintOut(const TRule& r,SlinkerGrid& req,SlinkerGrid& impl);
+		static void GetBeforeAndAfterGridsForRule(const TRule& r,SlinkerGrid& req,SlinkerGrid& impl);
 		
 		/// helper functions to identify where in the grid we are
 		static bool IsOdd ( int a );
@@ -276,3 +279,5 @@ class SlinkerGrid
 		/// does this grid contain any loops?
 		bool HasLoop(); // (actually const but makes temporary changes...)
 };
+
+#endif // __SLINKERGRID_H__
