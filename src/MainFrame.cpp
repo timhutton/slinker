@@ -17,18 +17,22 @@
 	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// wxWidgets
 #include "wxWidgets_standard_headers.h"
 #include <wx/choicdlg.h>
+#include <wx/numdlg.h>
 
+// local:
 #include "MainFrame.h"
 #include "IDs.h"
+#include "RuleDepictionDialog.h"
+#include "DrawSlinkerGrid.h"
 
+// STL:
 #include <vector>
 #include <fstream>
 #include <sstream>
 using namespace std;
-
-#include <wx/numdlg.h>
 
 // the event tables connect the wxWidgets events with the functions (event
 // handlers) which process them. It can be also done at run-time, but for the
@@ -380,119 +384,21 @@ void MainFrame::OnSearchForNewRules(wxCommandEvent &event)
 	wxBusyCursor b;
 	SlinkerGrid::FindNewRules();
 }
-
-void MainFrame::ComputeDrawingCoordinates(const SlinkerGrid& g,wxPaintDC& dc)
-{
-	const int BORDER = 10;
-	const int X = g.GetX();
-	const int Y = g.GetY();
-	this->cell_size = min((dc.GetSize().x-BORDER*2)/X,(dc.GetSize().y-BORDER*2)/Y);
-	this->origin.x = dc.GetSize().x/2 - (cell_size * X)/2;
-	this->origin.y = dc.GetSize().y/2 - (cell_size * Y)/2;
-}
-
-void DrawCross(wxPaintDC& dc,wxPoint p,int cell_size)
-{
-	wxPen offPen(wxColour(255,200,200),2);
-	dc.SetPen(offPen);
-	int r = cell_size/10;
-	dc.DrawLine(p.x-r,p.y-r,p.x+r,p.y+r);
-	dc.DrawLine(p.x-r,p.y+r,p.x+r,p.y-r);
-	dc.SetPen(wxNullPen);
-}
-
-// (just struggling with cross-platform issues - wxRound not available in Windows!? maybe version issues?)
-int tjh_round(float f) { return int((f-floor(f)<0.5f)?floor(f):ceil(f)); }
-
-void MainFrame::DrawGrid(const SlinkerGrid& g,wxPaintDC& dc)
-{
-	// we need a better method than recomputing this each time - but how?
-	this->ComputeDrawingCoordinates(g,dc);
-	const int X = g.GetX();
-	const int Y = g.GetY();
-	// blank the area
-	dc.SetBrush(*wxWHITE_BRUSH);
-	dc.DrawRectangle(0,0,dc.GetSize().x,dc.GetSize().y);
-	// draw the grid in light grey
-	const int grid_lightness = 200;
-	dc.SetPen(wxPen(wxColour(grid_lightness,grid_lightness,grid_lightness)));
-	int x,y;
-	for(x=0;x<=X;x++)
-	{
-		for(y=0;y<=Y;y++)
-		{
-			if(g.IsOnGrid(2*x+1,2*y+1))
-			{
-				dc.DrawRectangle(origin.x + cell_size*x,
-					origin.y + cell_size*y,
-					cell_size+1,cell_size+1);
-			}
-		}
-	}
-	// draw the borders
-	wxPen onPen(wxColour(100,100,255),3);
-	for(x=0;x<2*X+1;x++)
-	{
-		for(y=0;y<2*Y+1;y++)
-		{
-			if(g.IsOnGrid(x,y) && g.IsBorder(x,y) && g.gridValue(x,y)!=SlinkerGrid::UNKNOWN)
-			{
-				if(g.gridValue(x,y)==0)
-				{
-					if(g.IsHorizontalBorder(x,y))
-					{
-						int sx = (x-1)/2;
-						int sy = y/2;
-						DrawCross(dc,wxPoint(origin.x+sx*cell_size+cell_size/2,origin.y+sy*cell_size),cell_size);
-					}
-					else
-					{
-						int sx = x/2;
-						int sy = (y-1)/2;
-						DrawCross(dc,wxPoint(origin.x+sx*cell_size,origin.y+sy*cell_size+cell_size/2),cell_size);
-					}
-				}
-				else
-				{
-					dc.SetPen(onPen);
-					if(g.IsHorizontalBorder(x,y))
-					{
-						int sx = (x-1)/2;
-						int sy = y/2;
-						dc.DrawLine(origin.x+sx*cell_size,origin.y+sy*cell_size,origin.x+(sx+1)*cell_size,origin.y+sy*cell_size);
-					}
-					else
-					{
-						int sx = x/2;
-						int sy = (y-1)/2;
-						dc.DrawLine(origin.x+sx*cell_size,origin.y+sy*cell_size,origin.x+sx*cell_size,origin.y+(sy+1)*cell_size);
-					}
-				}
-			}
-		}
-	}
-	dc.SetPen(wxNullPen);
-	// draw cells entries
-	for(x=0;x<X;x++)
-	{
-		for(y=0;y<Y;y++)
-		{
-			if(g.IsOnGrid(x,y) && g.cellValue(x,y)!=SlinkerGrid::UNKNOWN)
-			{
-				char c = '0'+g.cellValue(x,y);
-				wxString str(&c,wxConvUTF8,1);
-				wxSize s;
-				dc.GetTextExtent(str,&s.x,&s.y);
-				dc.DrawText(str,tjh_round(origin.x+cell_size*(x+0.5)-s.x/2),tjh_round(origin.y+cell_size*(y+0.5)-s.y/2));
-			}
-		}
-	}
-}
-
 void MainFrame::OnPaint(wxPaintEvent &event)
 {
 	wxPaintDC dc(this);
-	DrawGrid(this->main_grid,dc);
+	
+	// recompute the drawing parameters (could be resize or init, or perhaps a toolbar change, best to be safe?)
+	wxRect r(0,0,dc.GetSize().x,dc.GetSize().y);
+	ComputeDrawingCoordinates(this->main_grid,r,this->origin,this->cell_size);
+	// (we store origin and size so that mouse clicks can be related to the grid easily)
+	
+	// blank the area
+	dc.SetBrush(*wxWHITE_BRUSH);
+	dc.DrawRectangle(0,0,dc.GetSize().x,dc.GetSize().y);
+	
+	// draw the grid
+	DrawGrid(this->main_grid,dc,this->origin,this->cell_size);
 }
 
 void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
@@ -655,17 +561,16 @@ void MainFrame::OnMakeAPuzzle(wxCommandEvent& event)
 
 wxPoint MainFrame::GetGridCoords(wxPoint p)
 {
-	// work out which border was closest, if any
+	// convert pixels to grid coordinates, using the origin and cell_size as last drawn
 	double px,py;
 	px = 2.0 * (p.x - this->origin.x ) / this->cell_size;
 	py = 2.0 * (p.y - this->origin.y ) / this->cell_size;
-	wxPoint gp = wxPoint(tjh_round(px),tjh_round(py));
+	wxPoint gp = wxPoint(wxRound(px),wxRound(py));
 	return gp;
 }
 
 void MainFrame::OnLeftClick(wxMouseEvent& event)
 {
-	// work out which border was closest, if any
 	wxPoint p(this->GetGridCoords(wxPoint(event.m_x,event.m_y)));
 	if(this->main_grid.IsOnGrid(p.x,p.y) && this->main_grid.IsBorder(p.x,p.y))
 	{
@@ -681,7 +586,6 @@ void MainFrame::OnLeftClick(wxMouseEvent& event)
 
 void MainFrame::OnRightClick(wxMouseEvent& event)
 {
-	// work out which border was closest, if any
 	wxPoint p(this->GetGridCoords(wxPoint(event.m_x,event.m_y)));
 	if(this->main_grid.IsOnGrid(p.x,p.y) && this->main_grid.IsBorder(p.x,p.y))
 	{
@@ -765,13 +669,21 @@ void MainFrame::OnGiveAHint(wxCommandEvent& event)
 		this->main_grid.ApplyRule(this->solving_rules[iRule],pos,iSymmetry);
 		Refresh(false);
 		Update();
-		if(false) // show the user the rule we used
+		if(true) // show the user the rule we used
 		{
 			SlinkerGrid req,impl;
-			SlinkerGrid::GetPrintOut(this->solving_rules[iRule],req,impl);
-			ostringstream oss;
-			oss << req.GetPrintOut() << "\n\n (" << pos.x << "," << pos.y << "\nsymm:" << iSymmetry;
-			wxMessageBox(wxString(oss.str().c_str(),wxConvUTF8)); // TODO: not much use in a proportional font...
+			SlinkerGrid::GetBeforeAndAfterGridsForRule(this->solving_rules[iRule],req,impl);
+			if(false)
+			{
+				ostringstream oss;
+				oss << req.GetPrintOut() << "\n\n (" << pos.x << "," << pos.y << "\nsymm:" << iSymmetry;
+				wxMessageBox(wxString(oss.str().c_str(),wxConvUTF8)); // TODO: not much use in a proportional font...
+			}
+			else
+			{
+				RuleDepictionDialog dlg(this,wxID_ANY,_T("Rule:"),req,impl);
+				dlg.ShowModal();
+			}
 		}
 	}
 	else
