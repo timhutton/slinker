@@ -26,10 +26,9 @@ An early alpha of Slinker is available. The source code version can:
 
 === Future work ===
 
-  * Sometimes gives puzzles with multiple solutions (eek!). Only seen in missing-centre puzzles but need to work out why this happens.
   * Undo/redo, fix position.
   * Puzzle creation should be faster - can we derive 'number removal' rules that tell us which numbers can be removed for a given local situation, given a set of solving rules?
-  * Puzzle solving should be faster - solving a 40x30 takes a long time, even with a 4-element ruleset.
+  * Puzzle solving should be faster - solving a 40x30 takes a _long_ time, even with a 4-element ruleset.
   * Puzzles should make more use of the harder rules - rather than removing numbers at random, can we remove those that leave the puzzle only solvable using more complex rules?
   * Export/import as full Loopy format.
   * Need to add option to make a puzzle that would require highlander rules, and also make a list of highlander rules (how?).
