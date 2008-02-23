@@ -106,6 +106,8 @@ class SlinkerGrid
 		int GetX() const { return X; }
 		/// retrieve the height of the grid
 		int GetY() const { return Y; }
+		/// retrieve the shape of the grid
+		TGridShape GetGridShape() const { return grid_shape; }
 
 		/// read/write cell value - valid range from (0,0) to (width-1,height-1) inclusive
 		int& cellValue ( int x,int y );

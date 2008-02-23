@@ -638,6 +638,11 @@ void MainFrame::OnSize(wxSizeEvent& event)
 
 void MainFrame::OnExportLoopyPuzzleString(wxCommandEvent& event)
 {
+	if(this->main_grid.GetGridShape() != SlinkerGrid::RectangleShape)
+	{
+		wxMessageBox(_T("Non-rectangular puzzles not supported."));
+		return;
+	}
 	wxGetTextFromUser(_T("(copy and paste this text into Loopy)"),_T("Puzzle as a Loopy format string:"),
 		wxString(this->main_grid.GetPuzzleInLoopyFormat().c_str(),wxConvUTF8));
 }
