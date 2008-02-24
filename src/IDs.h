@@ -35,15 +35,15 @@ namespace ID
 		ExportLoopyPuzzleString,
 		ImportLoopyPuzzleString,
 	
-		// actions menu
-		SearchForSolutions,
-		SearchForNewRules,
+		// puzzle menu
+		MakeAPuzzle,
+		GiveAHint,
 		Clear,
 		
-		// tools menu
+		// analysis menu
 		DemonstrateLoopGrowthRules,
-		MakeAPuzzle,
 		AnalyzePuzzleDifficulty,
-		GiveAHint,
+		SearchForNewRules,
+		
 	};
 };

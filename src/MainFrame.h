@@ -35,31 +35,30 @@ public:
 	void OnSize(wxSizeEvent& event);
 	void OnPaint(wxPaintEvent& event);
 	
-	// file menu
-	void OnExportLoopyPuzzleString(wxCommandEvent& event);
-	void OnImportLoopyPuzzleString(wxCommandEvent& event);
-	
-	// actions menu
-	void OnSearchForSolutions(wxCommandEvent& event);
-	void OnSearchForNewRules(wxCommandEvent& event);
-	void OnClear(wxCommandEvent &event);
-	
-	// tools menu
-	void OnDemonstrateLoopGrowthRules(wxCommandEvent& event);
-	void OnMakeAPuzzle(wxCommandEvent& event);
-	void OnAnalyzePuzzleDifficulty(wxCommandEvent& event);
-	void OnGiveAHint(wxCommandEvent& event);
-	
 	// mouse handling
 	void OnLeftClick(wxMouseEvent& event);
 	void OnRightClick(wxMouseEvent& event);
 	
-	bool AskUserForSolvingRulesFile();
+	// file menu
+	void OnExportLoopyPuzzleString(wxCommandEvent& event);
+	void OnImportLoopyPuzzleString(wxCommandEvent& event);
+	
+	// puzzle menu
+	void OnMakeAPuzzle(wxCommandEvent& event);
+	void OnGiveAHint(wxCommandEvent& event);
+	void OnClear(wxCommandEvent &event);
+	
+	// analysis menu
+	void OnDemonstrateLoopGrowthRules(wxCommandEvent& event);
+	void OnAnalyzePuzzleDifficulty(wxCommandEvent& event);
+	void OnSearchForNewRules(wxCommandEvent& event);
 	
 private: // private data
 
 	/// we disable the UI if in the middle of an operation
 	bool working;
+	
+	bool AskUserForSolvingRulesFile();
 	
 	/// set the menu items and buttons to enabled/disabled depending on the value of working
 	void UpdateEnabledState();
