@@ -4,8 +4,6 @@ Slinker is an attempt to capture the best way to generate slitherlink-type puzzl
 
 (Slitherlink is probably a trademark of Nicoli ([http://www.nicoli.co.jp nicoli.co.jp]) who invented the puzzle, so go to them if you want to buy genuine quality puzzles.)
 
-Other Slitherlink puzzle generators: [http://www.chiark.greenend.org.uk/~sgtatham/puzzles/ Loopy], [http://www.deadofnight.org/?x=other Loop-de-Loop], [http://www.krazydad.com/slitherlink/ KrazyDad] (Loopy code adapted for hexagonal and Penrose grids). Please tell me of more.
-
 === Downloads ===
 
 The current version of Slinker is 0.1. The following downloads are available:
@@ -42,3 +40,11 @@ Slinker can:
   * Need to add option to make a puzzle that would require highlander rules, and also make a list of highlander rules (how?).
   * May want to make 'special situation' puzzles - e.g. those involving only '2's, or those with certain areas empty. How to allow the user to do this? Or provide the programmer with tools to do this?
   * Analysis of puzzle difficulty - max/average level of rules required to solve, need for highlander, etc.? Ideally we'd like to be able to rate every puzzle as scientifically as possible, and seek consensus on the method. 
+
+=== Links ===
+
+  * [http://www.kwontomloop.com Kwon-Tom Loop] - an amazing community of Slitherlink-obsessed geniuses.
+  * Other Slitherlink puzzle generators:
+    * [http://www.chiark.greenend.org.uk/~sgtatham/puzzles/ Loopy]
+    * [http://www.krazydad.com/slitherlink/ KrazyDad] (Loopy code adapted for hexagonal and Penrose grids)
+    * [http://www.deadofnight.org/?x=other Loop-de-Loop]
