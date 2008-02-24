@@ -16,6 +16,10 @@ The current version of Slinker is 0.1. The following downloads are available:
 
 Alternatively you can download the unstable development version of Slinker here: [http://code.google.com/p/slinker/source/checkout svn repository].
 
+=== Screenshots ===
+
+  * [http://slinker.googlecode.com/files/slinker-0.1_screenshot1_linux.png Slinker 0.1 under Linux]
+
 === Status ===
 
 Slinker can:
