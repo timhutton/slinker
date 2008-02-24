@@ -31,7 +31,8 @@ class RuleDepictionDialog : public wxDialog
 			const SlinkerGrid& after);
 		
 		void OnPaint(wxPaintEvent& event);
-		
+		void OnSize(wxSizeEvent& event);
+
 	protected:
 	
 		const SlinkerGrid &req;
