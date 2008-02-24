@@ -44,7 +44,7 @@ Slinker can:
 === Links ===
 
   * [http://www.kwontomloop.com Kwon-Tom Loop] - an amazing community of Slitherlink-obsessed geniuses.
-  * Other Slitherlink puzzle generators:
+  * Other Slitherlink puzzle generators: (please tell me of any more you know)
     * [http://www.chiark.greenend.org.uk/~sgtatham/puzzles/ Loopy]
     * [http://www.krazydad.com/slitherlink/ KrazyDad] (Loopy code adapted for hexagonal and Penrose grids)
     * [http://www.deadofnight.org/?x=other Loop-de-Loop]
