@@ -2,7 +2,7 @@
 
 Slinker is an attempt to capture the best way to generate slitherlink-type puzzles. 
 
-(Slitherlink is probably a trademark of [http://www.nicoli.co.jp nicoli.co.jp Nicoli] who invented the puzzle, so go to them if you want to buy genuine quality puzzles.)
+(Slitherlink is probably a trademark of [http://www.nikoli.co.jp Nikoli] who invented the puzzle, so go to them if you want to buy genuine quality puzzles.)
 
 === Downloads ===
 
