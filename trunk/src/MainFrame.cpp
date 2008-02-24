@@ -45,24 +45,23 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	EVT_PAINT( MainFrame::OnPaint)
 	EVT_SIZE( MainFrame::OnSize)
 
+	// mouse events
+	EVT_LEFT_UP(MainFrame::OnLeftClick)
+	EVT_RIGHT_UP(MainFrame::OnRightClick)
+	
 	// file menu
 	EVT_MENU(ID::ExportLoopyPuzzleString,MainFrame::OnExportLoopyPuzzleString)
 	EVT_MENU(ID::ImportLoopyPuzzleString,MainFrame::OnImportLoopyPuzzleString)
 	
-	// tools menu
-	EVT_MENU(ID::DemonstrateLoopGrowthRules,MainFrame::OnDemonstrateLoopGrowthRules)
+	// puzzle menu
 	EVT_MENU(ID::MakeAPuzzle,MainFrame::OnMakeAPuzzle)
-	EVT_MENU(ID::AnalyzePuzzleDifficulty,MainFrame::OnAnalyzePuzzleDifficulty)
 	EVT_MENU(ID::GiveAHint,MainFrame::OnGiveAHint)
+	EVT_MENU(ID::Clear,MainFrame::OnClear)
 
 	// actions menu
-	EVT_MENU(ID::SearchForSolutions, MainFrame::OnSearchForSolutions)
+	EVT_MENU(ID::DemonstrateLoopGrowthRules,MainFrame::OnDemonstrateLoopGrowthRules)
+	EVT_MENU(ID::AnalyzePuzzleDifficulty,MainFrame::OnAnalyzePuzzleDifficulty)
 	EVT_MENU(ID::SearchForNewRules, MainFrame::OnSearchForNewRules)
-	EVT_MENU(ID::Clear,MainFrame::OnClear)
-	
-	// mouse events
-	EVT_LEFT_UP(MainFrame::OnLeftClick)
-	EVT_RIGHT_UP(MainFrame::OnRightClick)
 	
 END_EVENT_TABLE()
 
@@ -74,34 +73,39 @@ MainFrame::MainFrame(const wxString& title)
 {
 #if wxUSE_MENUS
 	// create a menu bar
-	wxMenu *fileMenu = new wxMenu;
-	fileMenu->Append(ID::ExportLoopyPuzzleString,_T("Export puzzle as a Loopy format string"));
-	fileMenu->Append(ID::ImportLoopyPuzzleString,_T("Import a puzzle from a Loopy format string"));
-	fileMenu->AppendSeparator();
-	fileMenu->Append(ID::Minimal_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
-
-	wxMenu *actionsMenu = new wxMenu;
-	actionsMenu->Append(ID::Clear,_T("Clear the grid borders"));
-	actionsMenu->Append(ID::SearchForSolutions,_T("Search for solutions.."),_T("Searches for solutions"));
-	actionsMenu->Append(ID::SearchForNewRules,_T("Search for new rules.."),_T("Given the existing rules, searches for more complex ones"));
-
+	wxMenuBar *menuBar = new wxMenuBar();
 	
-	wxMenu *toolsMenu = new wxMenu;
-	toolsMenu->Append(ID::MakeAPuzzle,_T("Make a puzzle"));
-	toolsMenu->Append(ID::AnalyzePuzzleDifficulty,_T("Analyze the current puzzle's difficulty"));
-	toolsMenu->Append(ID::GiveAHint,_T("Give a hint\tF2"),_T("Show where a rule can be applied"));
-	toolsMenu->AppendSeparator();
-	toolsMenu->Append(ID::DemonstrateLoopGrowthRules,_T("Demonstrate the growth rules"));
+	{
+		wxMenu *fileMenu = new wxMenu;
+		fileMenu->Append(ID::ExportLoopyPuzzleString,_T("Export puzzle as a Loopy format string"));
+		fileMenu->Append(ID::ImportLoopyPuzzleString,_T("Import a puzzle from a Loopy format string"));
+		fileMenu->AppendSeparator();
+		fileMenu->Append(ID::Minimal_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
+		menuBar->Append(fileMenu, _T("&File"));
+	}
+	
+	{
+		wxMenu *puzzleMenu = new wxMenu;
+		puzzleMenu->Append(ID::MakeAPuzzle,_T("Make a puzzle"));
+		puzzleMenu->Append(ID::Clear,_T("Clear the grid borders"));
+		puzzleMenu->AppendSeparator();
+		puzzleMenu->Append(ID::GiveAHint,_T("Give a hint\tF2"),_T("Show a rule that can be applied"));
+		menuBar->Append(puzzleMenu, _T("&Puzzle"));
+	}
+
+	{
+		wxMenu *analysisMenu = new wxMenu;
+		analysisMenu->Append(ID::DemonstrateLoopGrowthRules,_T("Demonstrate the growth rules"));
+		analysisMenu->Append(ID::AnalyzePuzzleDifficulty,_T("Analyze the current puzzle's difficulty"));
+		analysisMenu->Append(ID::SearchForNewRules,_T("Search for new rules.."),_T("Given the existing rules, searches for more complex ones"));
+		menuBar->Append(analysisMenu,_T("&Analysis"));
+	}
 	
 	// the "About" item should be in the help menu
 	wxMenu *helpMenu = new wxMenu;
 	helpMenu->Append(ID::Minimal_About, _T("&About...\tF1"), _T("Show about dialog"));
 
 	// now append the freshly created menu to the menu bar...
-	wxMenuBar *menuBar = new wxMenuBar();
-	menuBar->Append(fileMenu, _T("&File"));
-	menuBar->Append(toolsMenu,_T("&Tools"));
-	menuBar->Append(actionsMenu, _T("&Actions"));
 	menuBar->Append(helpMenu, _T("&Help"));
 
 	// ... and attach this menu bar to the frame
@@ -149,129 +153,12 @@ void MainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 				this);
 }
 
-void MainFrame::OnSearchForSolutions(wxCommandEvent &event)
-{
-	wxBusyCursor busy;
-
-	/* the first published puzzle solved with this program, from puzzle-loop */
-	SlinkerGrid g1(5,5);
-	g1.cellValue(1,0)=2;
-	g1.cellValue(4,0)=3;
-	g1.cellValue(1,1)=2;
-	g1.cellValue(2,1)=2;
-	g1.cellValue(2,2)=0;
-	g1.cellValue(3,2)=3;
-	g1.cellValue(0,3)=1;
-	g1.cellValue(4,3)=2;
-
-	// early CG puzzle : hard
-	SlinkerGrid g2(6,5);
-	g2.cellValue(0,0)=g2.cellValue(1,0)=g2.cellValue(2,0)=g2.cellValue(4,0)=g2.cellValue(5,0)=2;
-	g2.cellValue(4,1)=3;
-	g2.cellValue(0,2)=1;
-	g2.cellValue(1,2)=0;
-	g2.cellValue(4,2)=1;
-	g2.cellValue(2,3)=2;
-	g2.cellValue(4,3)=2;
-	g2.cellValue(5,3)=3;
-	g2.cellValue(0,4)=g2.cellValue(2,4)=g2.cellValue(4,4)=1;
-
-	// early CG puzzle: medium
-	SlinkerGrid g3(6,5);
-	g3.cellValue(1,0)=3;
-	g3.cellValue(2,0)=3;
-	g3.cellValue(4,0)=1;
-	g3.cellValue(0,1)=2;
-	g3.cellValue(4,1)=1;
-	g3.cellValue(0,2)=2;
-	g3.cellValue(3,2)=2;
-	g3.cellValue(5,2)=1;
-	g3.cellValue(2,3)=3;
-	g3.cellValue(4,3)=2;
-	g3.cellValue(5,3)=1;
-	g3.cellValue(0,4)=3;
-	g3.cellValue(2,4)=1;
-	g3.cellValue(3,4)=2;
-	g3.cellValue(4,4)=3;
-	g3.cellValue(5,4)=1;
-
-	// CG puzzle
-	SlinkerGrid g4(7,7);
-	g4.cellValue(0,0)=2;
-	g4.cellValue(3,0)=2;
-	g4.cellValue(1,1)=2;
-	g4.cellValue(4,1)=3;
-	g4.cellValue(6,1)=3;
-	g4.cellValue(3,2)=1;
-	g4.cellValue(5,2)=1;
-	g4.cellValue(2,3)=1;
-	g4.cellValue(4,3)=1;
-	g4.cellValue(5,3)=0;
-	g4.cellValue(6,3)=2;
-	g4.cellValue(0,4)=2;
-	g4.cellValue(5,4)=1;
-	g4.cellValue(6,4)=3;
-	g4.cellValue(2,5)=1;
-	g4.cellValue(4,5)=3;
-	g4.cellValue(5,5)=1;
-	g4.cellValue(1,6)=3;
-	g4.cellValue(2,6)=1;
-	g4.cellValue(5,6)=1;
-
-	SlinkerGrid g5(3,3);
-	//g5.cellValue(0,0)=3;
-	//g5.cellValue(1,0)=2;
-
-	SlinkerGrid g6(5,5); // first no-guessing solution created with this program
-	g6.cellValue(0,0)=2;
-	g6.cellValue(1,0)=1;
-	g6.cellValue(4,0)=1;
-	g6.cellValue(3,1)=2;
-	g6.cellValue(4,1)=1;
-	g6.cellValue(0,2)=1;
-	g6.cellValue(1,2)=2;
-	g6.cellValue(2,2)=2;
-	g6.cellValue(4,2)=1;
-	g6.cellValue(0,3)=2;
-	g6.cellValue(2,4)=1;
-	g6.cellValue(3,4)=3;
-	g6.cellValue(4,4)=1;
-
-	SlinkerGrid g(g6);
-	
-	vector<SlinkerGrid::TRule> rules;
-
-	vector<SlinkerGrid> solutions;
-	solutions = g.FindSolutions(rules,true,2); // allow guessing
-
-	if(solutions.size()==1)
-	{
-		wxMessageBox(wxT("Found unique solution - see log.txt"));
-		ofstream out("log.txt");
-		out << solutions.front().GetPrintOut();
-	}
-	else if(solutions.size()>1)
-	{
-		ostringstream oss;
-		oss << "Found " << solutions.size() << " solutions - see log.txt";
-		wxMessageBox(wxString(oss.str().c_str(),wxConvUTF8));
-		ofstream out("log.txt");
-		for(vector<SlinkerGrid>::iterator it = solutions.begin();it!=solutions.end();it++)
-		{
-			out << it->GetPrintOut() << "\n\n-------\n\n";
-		}
-	}
-	else
-	{
-		wxMessageBox(wxT("Found no solutions"));
-	}
-}
-
 void MainFrame::OnSearchForNewRules(wxCommandEvent &event)
 {
 	wxBusyCursor b;
 	SlinkerGrid::FindNewRules();
 }
+
 void MainFrame::OnPaint(wxPaintEvent &event)
 {
 	wxPaintDC dc(this);
@@ -545,6 +432,7 @@ void MainFrame::OnExportLoopyPuzzleString(wxCommandEvent& event)
 		return;
 	}
 	
+	// (we don't want to get any text but this dialog allows them to copy out the string
 	wxGetTextFromUser(_T("(copy and paste this text into Loopy)"),_T("Puzzle as a Loopy format string:"),
 		wxString(this->main_grid.GetPuzzleInLoopyFormat().c_str(),wxConvUTF8));
 }
@@ -580,9 +468,13 @@ void MainFrame::OnGiveAHint(wxCommandEvent& event)
 	bool found_one = this->main_grid.GetAValidMove(this->solving_rules,iRule,pos,iSymmetry);
 	if(found_one)
 	{
-		this->main_grid.ApplyRule(this->solving_rules[iRule],pos,iSymmetry);
-		Refresh(false);
-		Update();
+		if(false)
+		{
+			// apply the rule
+			this->main_grid.ApplyRule(this->solving_rules[iRule],pos,iSymmetry);
+			Refresh(false);
+			Update();
+		}
 		if(true) // show the user the rule we used
 		{
 			SlinkerGrid req,impl;
@@ -608,6 +500,7 @@ void MainFrame::OnImportLoopyPuzzleString(wxCommandEvent& event)
 {
 	wxString s = wxGetTextFromUser(_T("(paste the Loopy puzzle string here)"),_T("Import puzzle from a Loopy format string:"),
 		_T(""));
+	if(s.empty()) return; // user cancelled
 	this->main_grid = SlinkerGrid::ReadFromLoopyFormat(string(s.fn_str()));
 	this->the_solution = SlinkerGrid(); // just so we know it is empty
 	Refresh(false);
