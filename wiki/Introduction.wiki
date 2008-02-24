@@ -12,13 +12,15 @@ The current version of Slinker is 0.1. The following downloads are available:
 
   * [http://slinker.googlecode.com/files/Slinker-0.1.0-win32.exe Windows executable] (476KB)
   * [http://slinker.googlecode.com/files/Slinker-0.1.0-Linux.sh Linux executable] (112KB)
-  * [http://slinker.googlecode.com/files/Slinker-0.1.0-Source.tar.gz source code] (59KB) - for almost _any_ platform, see the [http://code.google.com/p/slinker/source/browse/trunk/README.txt README.txt] for build requirements and instructions.
+  * [http://slinker.googlecode.com/files/Slinker-0.1.0-Source.tar.gz source code] (59KB) - for all popular platforms, see the [http://code.google.com/p/slinker/source/browse/trunk/README.txt README.txt] for build requirements and instructions.
 
 Alternatively you can download the unstable development version of Slinker here: [http://code.google.com/p/slinker/source/checkout svn repository].
 
 === Screenshots ===
 
-  * [http://slinker.googlecode.com/files/slinker-0.1_screenshot1_linux.png Slinker 0.1 under Linux]
+http://slinker.googlecode.com/files/slinker-0.1_screenshot1_linux.png 
+
+   Slinker 0.1 under Linux
 
 === Status ===
 
