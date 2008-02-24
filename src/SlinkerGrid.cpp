@@ -108,13 +108,13 @@ bool SlinkerGrid::IsOnGrid(int x,int y) const
 			}
 		case CircleShape:
 			{
-				// make a test x and y, based on a square (an oval is a flattened circle)
+				// TODO: make a test x and y, based on a square (an oval is a flattened circle)
 				int tx=x,ty=y;
-				if(X<Y) tx = tx*Y/X;
-				else if(Y<X) ty = ty*X/Y;
+				//if(X<Y) tx = tx*Y/X; // TODO: this isn't quite right, we want symmetrical ovals
+				//else if(Y<X) ty = ty*X/Y;
 				int mid = (2*max(X,Y)+1)/2;
 				int r = mid; // radius of inset circle
-				// TODO: this isn't quite right, we want symmetrical ovals
+				
 				if(false)
 				{ // DEBUG
 					ostringstream oss;

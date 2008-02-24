@@ -44,6 +44,6 @@ namespace ID
 		DemonstrateLoopGrowthRules,
 		AnalyzePuzzleDifficulty,
 		SearchForNewRules,
-		
+		ConvertRulesFileToCCode,
 	};
 };

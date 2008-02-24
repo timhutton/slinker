@@ -27,6 +27,8 @@
 #include "IDs.h"
 #include "RuleDepictionDialog.h"
 #include "DrawSlinkerGrid.h"
+#include "solving_rules_3.h"
+#include "solving_rules_4.h"
 
 // STL:
 #include <vector>
@@ -58,17 +60,18 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	EVT_MENU(ID::GiveAHint,MainFrame::OnGiveAHint)
 	EVT_MENU(ID::Clear,MainFrame::OnClear)
 
-	// actions menu
+	// analysis menu
 	EVT_MENU(ID::DemonstrateLoopGrowthRules,MainFrame::OnDemonstrateLoopGrowthRules)
 	EVT_MENU(ID::AnalyzePuzzleDifficulty,MainFrame::OnAnalyzePuzzleDifficulty)
 	EVT_MENU(ID::SearchForNewRules, MainFrame::OnSearchForNewRules)
+	EVT_MENU(ID::ConvertRulesFileToCCode,MainFrame::OnConvertRulesFileToCCode)
 	
 END_EVENT_TABLE()
 
 MainFrame::MainFrame(const wxString& title)
 	: working(false),
 	  wxFrame(NULL, wxID_ANY, title),
-	  the_solution(40,30),main_grid(40,30),
+	  the_solution(7,7),main_grid(7,7),
 	  has_solved(true)
 {
 #if wxUSE_MENUS
@@ -77,8 +80,12 @@ MainFrame::MainFrame(const wxString& title)
 	
 	{
 		wxMenu *fileMenu = new wxMenu;
-		fileMenu->Append(ID::ExportLoopyPuzzleString,_T("Export puzzle as a Loopy format string"));
-		fileMenu->Append(ID::ImportLoopyPuzzleString,_T("Import a puzzle from a Loopy format string"));
+		wxMenu *exportMenu = new wxMenu;
+		exportMenu->Append(ID::ExportLoopyPuzzleString,_T("Loopy format string"),_T("Export the puzzle as a 'specific' string that Loopy can read."));
+		fileMenu->AppendSubMenu(exportMenu,_T("&Export"),_T("Export the current puzzle in various formats."));
+		wxMenu *importMenu = new wxMenu;
+		importMenu->Append(ID::ImportLoopyPuzzleString,_T("Loopy format string"),_T("Import a 'specific' Loopy puzzle string."));
+		fileMenu->AppendSubMenu(importMenu,_T("&Import"),_T("Import puzzles in various formats."));
 		fileMenu->AppendSeparator();
 		fileMenu->Append(ID::Minimal_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
 		menuBar->Append(fileMenu, _T("&File"));
@@ -86,24 +93,26 @@ MainFrame::MainFrame(const wxString& title)
 	
 	{
 		wxMenu *puzzleMenu = new wxMenu;
-		puzzleMenu->Append(ID::MakeAPuzzle,_T("Make a puzzle"));
-		puzzleMenu->Append(ID::Clear,_T("Clear the grid borders"));
+		puzzleMenu->Append(ID::MakeAPuzzle,_T("Make a puzzle\tF2"),_T("Generate a new puzzle, using various parameters."));
+		puzzleMenu->Append(ID::Clear,_T("Clear the grid borders"),_T("Clear all the borders, and start again."));
 		puzzleMenu->AppendSeparator();
-		puzzleMenu->Append(ID::GiveAHint,_T("Give a hint\tF2"),_T("Show a rule that can be applied"));
+		puzzleMenu->Append(ID::GiveAHint,_T("Give a hint\tF3"),_T("Show a rule that can be applied."));
 		menuBar->Append(puzzleMenu, _T("&Puzzle"));
 	}
 
 	{
 		wxMenu *analysisMenu = new wxMenu;
-		analysisMenu->Append(ID::DemonstrateLoopGrowthRules,_T("Demonstrate the growth rules"));
-		analysisMenu->Append(ID::AnalyzePuzzleDifficulty,_T("Analyze the current puzzle's difficulty"));
-		analysisMenu->Append(ID::SearchForNewRules,_T("Search for new rules.."),_T("Given the existing rules, searches for more complex ones"));
+		analysisMenu->Append(ID::DemonstrateLoopGrowthRules,_T("Demonstrate the growth rules"),_T("Make an animation that shows the way Slinker generates random loops."));
+		analysisMenu->Append(ID::AnalyzePuzzleDifficulty,_T("Analyze the current puzzle's difficulty..."),_T("Compute some statistics about the current puzzle's difficulty."));
+		analysisMenu->Append(ID::ConvertRulesFileToCCode,_T("Convert a rules file to C/C++ code..."),_T("Given a ruleset in a .txt file, convert it to a .h file that can be linked into source code directly."));
+		analysisMenu->AppendSeparator();
+		analysisMenu->Append(ID::SearchForNewRules,_T("Search for new rules.."),_T("(Advanced function) Given the existing rules, searches for more complex ones"));
 		menuBar->Append(analysisMenu,_T("&Analysis"));
 	}
 	
 	// the "About" item should be in the help menu
 	wxMenu *helpMenu = new wxMenu;
-	helpMenu->Append(ID::Minimal_About, _T("&About...\tF1"), _T("Show about dialog"));
+	helpMenu->Append(ID::Minimal_About, _T("&About...\tF1"), _T("Show some details about Slinker."));
 
 	// now append the freshly created menu to the menu bar...
 	menuBar->Append(helpMenu, _T("&Help"));
@@ -117,6 +126,21 @@ MainFrame::MainFrame(const wxString& title)
 	CreateStatusBar(1);
 #endif // wxUSE_STATUSBAR
 
+	MakeAnInitialPuzzle();
+}
+
+void MainFrame::MakeAnInitialPuzzle()
+{
+	working = true;
+	UpdateEnabledState();
+	wxBusyCursor busy;
+	
+	this->main_grid.SlinkerGrid::MakePuzzle(GetSolvingRules4(),false);
+	this->the_solution = this->main_grid;
+	this->main_grid.ClearBorders();
+	
+	working = false;
+	UpdateEnabledState();
 }
 
 void MainFrame::UpdateEnabledState()
@@ -155,6 +179,11 @@ void MainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 
 void MainFrame::OnSearchForNewRules(wxCommandEvent &event)
 {
+	// this function not yet for general consumption - too many parameters and so on
+	// please see inside SlinkerGrid::FindNewRules()
+	wxMessageBox(_T("To enable this function, explore the source code and rebuild."),_T("Not enabled."));
+	return;
+	
 	wxBusyCursor b;
 	SlinkerGrid::FindNewRules();
 }
@@ -184,7 +213,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 	// pick a random shape
 	SlinkerGrid::TGridShape gs;
 	switch(rand()%3) {case 0: gs=SlinkerGrid::RectangleShape; break; case 1: gs=SlinkerGrid::MissingCentre; break; case 2: default: gs=SlinkerGrid::CircleShape; break; }
-	this->main_grid = SlinkerGrid(15,21,gs);
+	this->main_grid = SlinkerGrid(15,9,gs);
 	this->main_grid.InitGridWithSeedLoop();
 	wxLogStatus(wxT("Starting with a single-cell loop..."));
 	Refresh(false);
@@ -267,7 +296,7 @@ void MainFrame::OnMakeAPuzzle(wxCommandEvent& event)
 	wxPoint size;
 	{
 		const int N_SIZES=7;
-		const int sizes[N_SIZES][2] = { {4,4},{5,5},{7,7},{9,9},{11,11},{15,15},{20,14} };
+		const int sizes[N_SIZES][2] = { {4,4},{5,5},{6,6},{7,7},{9,9},{11,11},{15,15} }; // solver not fast enough for larger sizes yet
 		wxArrayString size_choices;
 		for(int i=0;i<N_SIZES;i++)
 		{
@@ -310,7 +339,26 @@ void MainFrame::OnMakeAPuzzle(wxCommandEvent& event)
 		// (wxGetSingleChoiceIndex ignores the size parameters passed)
     }
 	// ask user for the ruleset (or just use the current one)
-	if(!AskUserForSolvingRulesFile()) return;
+	{
+		wxArrayString choices;
+		choices.Add(_T("beginner level"));
+		choices.Add(_T("intermediate level")); // TODO: custom level (load own rule file) ?
+		wxString *strings;
+		int n = ConvertWXArrayToC(choices, &strings);
+		wxSingleChoiceDialog dialog(this, _T("Select the puzzle difficulty:"), _T("Select from:"), n, strings);
+		dialog.SetSize(400,200);
+		if ( dialog.ShowModal() == wxID_OK )
+		{
+			if(dialog.GetSelection()==0)
+				this->solving_rules = GetSolvingRules3();
+			else 
+				this->solving_rules = GetSolvingRules4();
+		}
+		else
+			return; // user cancelled
+		delete []strings;
+		// (wxGetSingleChoiceIndex ignores the size parameters passed)
+    }
 	// ask user whether brute-force solving is also allowed
 	bool guessing_allowed;
 	{
@@ -440,7 +488,8 @@ void MainFrame::OnExportLoopyPuzzleString(wxCommandEvent& event)
 void MainFrame::OnAnalyzePuzzleDifficulty(wxCommandEvent& event)
 {
 	this->solving_rules.clear();
-	AskUserForSolvingRulesFile(); // (they can cancel, and we will try to solve without rules, which might be slow)
+	if(!AskUserForSolvingRulesFile()) return;
+	// possibly they could cancel, and we will try to solve without rules, but it would be quite slow for large grids
 	
 	wxBusyCursor busy;
 	wxLogStatus(wxT("Working..."));
@@ -462,7 +511,8 @@ void MainFrame::OnClear(wxCommandEvent &event)
 
 void MainFrame::OnGiveAHint(wxCommandEvent& event)
 {
-	if(this->solving_rules.empty() && !AskUserForSolvingRulesFile()) return;
+	//if(this->solving_rules.empty() && !AskUserForSolvingRulesFile()) return;
+	this->solving_rules = GetSolvingRules4();
 	int iRule,iSymmetry;
 	wxPoint pos;
 	bool found_one = this->main_grid.GetAValidMove(this->solving_rules,iRule,pos,iSymmetry);
@@ -504,4 +554,60 @@ void MainFrame::OnImportLoopyPuzzleString(wxCommandEvent& event)
 	this->main_grid = SlinkerGrid::ReadFromLoopyFormat(string(s.fn_str()));
 	this->the_solution = SlinkerGrid(); // just so we know it is empty
 	Refresh(false);
+}
+
+void MainFrame::OnConvertRulesFileToCCode(wxCommandEvent& event)
+{
+	wxString filename = wxFileSelector(_T("Specify the solving rules file to use:"),_T(""),_T("*.txt"),_T("txt"),
+		_T("*.txt"),wxOPEN|wxFILE_MUST_EXIST);
+	if(filename.empty()) return;
+	try {
+		vector<SlinkerGrid::TRule> rules;
+		SlinkerGrid::ReadRulesFromFile(string(filename.fn_str()),rules);
+		wxString output_filename = wxFileSelector(_T("Specify where to save the file:"),_T(""),_T("*.h"),_T("h"),
+		_T("*.h"),wxSAVE|wxOVERWRITE_PROMPT);
+		if(output_filename.empty()) return;
+		// write to file as a C function
+		ofstream out(output_filename.fn_str());
+		vector<SlinkerGrid::TRule>::const_iterator rules_it;
+		vector<SlinkerGrid::TElement>::const_iterator it;
+		SlinkerGrid req(4,4),impl(4,4);
+		unsigned int timestamp = static_cast<unsigned int>(time(NULL));
+		out << "#include \"SlinkerGrid.h\"\n\n#ifndef __" << timestamp 
+			<< "__\n#define __" << timestamp
+			<< "__\n\n#include<vector>\nusing std::vector;\n\nvector<SlinkerGrid::TRule> GetRules()\n{\n\tvector<SlinkerGrid::TRule> rules;\n\n";
+		for(rules_it=rules.begin();rules_it!=rules.end();rules_it++)
+		{
+			SlinkerGrid::GetBeforeAndAfterGridsForRule(*rules_it,req,impl);
+			// write out the rule in machine-readable format (and draw the rule onto two grids)
+			out << "\t{\n\t\t// ---------- Rule " << rules_it-rules.begin()+1 << ": --------------\n\t\tSlinkerGrid::TRule r;\n";
+			for(it=rules_it->required.begin();it!=rules_it->required.end();it++)
+				out << "\t\tr.required.push_back(SlinkerGrid::TElement(" << it->x << "," << it->y << "," << it->val << "));\n";
+			for(it=rules_it->implied.begin();it!=rules_it->implied.end();it++)
+				out << "\t\tr.implied.push_back(SlinkerGrid::TElement(" << it->x << "," << it->y << "," << it->val << "));\n";
+			// draw a visual depiction of the rule for humans
+			{
+				istringstream req_text(req.GetPrintOut()),impl_text(impl.GetPrintOut());
+				out << "\t\t/*\n";
+				int y;
+				string s;
+				for(y=0;y<2*req.GetY()+1;y++)
+				{
+					out << "\t\t\t";
+					getline(req_text,s);
+					out << s;
+					if(y==req.GetY()) out << "       =>         ";
+					else out << "                  ";
+					getline(impl_text,s);
+					out << s << "\n";
+				}
+				out << "\t\t*/\n\t\trules.push_back(r);\n\t}\n";
+			}
+		}
+		out << "\treturn rules;\n}\n\n#endif\n";
+	}
+	catch(exception e)
+	{
+		wxMessageBox(wxString(e.what(),wxConvUTF8));
+	}
 }
