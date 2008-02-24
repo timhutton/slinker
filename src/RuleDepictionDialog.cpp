@@ -30,6 +30,7 @@
 BEGIN_EVENT_TABLE(RuleDepictionDialog, wxDialog)
 
 	EVT_PAINT( RuleDepictionDialog::OnPaint)
+	EVT_SIZE( RuleDepictionDialog::OnSize)
 
 END_EVENT_TABLE()
 
@@ -60,4 +61,10 @@ void RuleDepictionDialog::OnPaint(wxPaintEvent& event)
 	// draw an arrow in between
 	wxBitmap bmp = wxArtProvider::GetBitmap(wxART_GO_FORWARD);
 	dc.DrawBitmap(bmp,dc.GetSize().x/2-bmp.GetWidth()/2,dc.GetSize().y/2-bmp.GetHeight()/2);
+}
+
+void RuleDepictionDialog::OnSize(wxSizeEvent& event)
+{
+	this->Refresh(false);
+	event.Skip();
 }

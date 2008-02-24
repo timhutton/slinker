@@ -229,7 +229,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 		this->main_grid.GrowLoop(growth_rules,prob_divs);
 		Refresh(false);
 		Update();
-		//wxMilliSleep(1);
+		wxMilliSleep(1);
 		wxYield();
 	}
 	wxLogStatus(wxT("3 rules in balance : a looser, more interesting loop..."));
@@ -239,7 +239,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 		this->main_grid.GrowLoop(growth_rules,prob_divs);
 		Refresh(false);
 		Update();
-		//wxMilliSleep(1);
+		wxMilliSleep(1);
 		wxYield();
 	}
 	wxLogStatus(wxT("Rules 1 and 3 only : loop adopts minimal curvature and shrinks..."));
@@ -249,7 +249,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 		if(!this->main_grid.GrowLoop(growth_rules,prob_divs)) break;
 		Refresh(false);
 		Update();
-		//wxMilliSleep(1);
+		wxMilliSleep(1);
 		wxYield();
 	}
 	wxLogStatus(wxT(""));
