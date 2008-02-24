@@ -34,7 +34,7 @@ public:
 	void OnAbout(wxCommandEvent& event);
 	void OnSize(wxSizeEvent& event);
 	void OnPaint(wxPaintEvent& event);
-
+	
 	// file menu
 	void OnExportLoopyPuzzleString(wxCommandEvent& event);
 	void OnImportLoopyPuzzleString(wxCommandEvent& event);
@@ -57,6 +57,12 @@ public:
 	bool AskUserForSolvingRulesFile();
 	
 private: // private data
+
+	/// we disable the UI if in the middle of an operation
+	bool working;
+	
+	/// set the menu items and buttons to enabled/disabled depending on the value of working
+	void UpdateEnabledState();
 
 	/// the grid that is drawn on the screen and worked on by the user
 	SlinkerGrid main_grid;

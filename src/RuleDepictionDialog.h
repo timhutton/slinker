@@ -36,6 +36,8 @@ class RuleDepictionDialog : public wxDialog
 	
 		const SlinkerGrid &req;
 		const SlinkerGrid &impl;
+		
+		static const wxSize initial_size;
 
 		// any class wishing to process wxWidgets events must use this macro
 		DECLARE_EVENT_TABLE()
