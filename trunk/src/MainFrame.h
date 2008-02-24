@@ -52,17 +52,22 @@ public:
 	void OnDemonstrateLoopGrowthRules(wxCommandEvent& event);
 	void OnAnalyzePuzzleDifficulty(wxCommandEvent& event);
 	void OnSearchForNewRules(wxCommandEvent& event);
+	void OnConvertRulesFileToCCode(wxCommandEvent& event);
 	
 private: // private data
 
 	/// we disable the UI if in the middle of an operation
 	bool working;
 	
-	bool AskUserForSolvingRulesFile();
-	
 	/// set the menu items and buttons to enabled/disabled depending on the value of working
 	void UpdateEnabledState();
 
+	/// for analysis, we sometimes want to specify the exact ruleset being used
+	bool AskUserForSolvingRulesFile();
+	
+	/// make a puzzle using default settings, to get us started
+	void MakeAnInitialPuzzle();
+	
 	/// the grid that is drawn on the screen and worked on by the user
 	SlinkerGrid main_grid;
 	

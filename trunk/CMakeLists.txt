@@ -17,6 +17,8 @@ SET(SRCS_Slinker
   src/IDs.h
   src/next_combination.h
   src/wxWidgets_standard_headers.h
+  src/solving_rules_4.h
+  src/solving_rules_3.h
   )
 
 #-----------------------------------------------------------------------------
