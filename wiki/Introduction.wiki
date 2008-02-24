@@ -4,23 +4,25 @@ Slinker is an attempt to capture the best way to generate slitherlink-type puzzl
 
 (Slitherlink is probably a trademark of Nicoli ([http://www.nicoli.co.jp nicoli.co.jp]) who invented the puzzle, so go to them if you want to buy genuine quality puzzles.)
 
-If you have any use for Slinker, please just take it all and enjoy. It's GPL'd simply to encourage this.
-
 Other Slitherlink puzzle generators: [http://www.chiark.greenend.org.uk/~sgtatham/puzzles/ Loopy], [http://www.deadofnight.org/?x=other Loop-de-Loop], [http://www.krazydad.com/slitherlink/ KrazyDad] (Loopy code adapted for hexagonal and Penrose grids). Please tell me of more.
 
-=== Platforms ===
+=== Downloads ===
 
-Slinker can be compiled for any platform supporting [http://www.wxwidgets.org/ wxWidgets] and [http://www.cmake.org CMake] - including Linux, Windows and Mac. 
+The current version of Slinker is 0.1. The following downloads are available:
 
-Slinker is available as source code, or as binaries for certain platforms.
+  * [http://slinker.googlecode.com/files/Slinker-0.1.0-win32.exe Windows executable] (476KB)
+  * [http://slinker.googlecode.com/files/Slinker-0.1.0-Linux.sh Linux executable] (112KB)
+  * [http://slinker.googlecode.com/files/Slinker-0.1.0-Source.tar.gz source code] (59KB) - for almost _any_ platform, see the [http://code.google.com/p/slinker/source/browse/trunk/README.txt README.txt] for build requirements and instructions.
+
+Alternatively you can download the unstable development version of Slinker here: [http://code.google.com/p/slinker/source/checkout svn repository].
 
 === Status ===
 
-An early alpha of Slinker is available. The source code version can:
-  * create and solve puzzles using a set of rules
+Slinker can:
+  * create and solve puzzles of different difficulties using a set of rules
   * verify that puzzles have a unique solution
   * decide whether a puzzle can be directly solved with a given ruleset.
-  * can show where rules from the set chosen apply
+  * can offer useful hints for when you get stuck
   * import/export puzzles as a Loopy string
   * compute more rules, if `SlinkerGrid::FindNewRules()` makes sense to you
 
