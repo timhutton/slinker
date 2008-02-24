@@ -17,7 +17,7 @@
 	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// wxWidgets
+// wxWidgets:
 #include "wxWidgets_standard_headers.h"
 #include <wx/choicdlg.h>
 #include <wx/numdlg.h>
@@ -67,8 +67,10 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 END_EVENT_TABLE()
 
 MainFrame::MainFrame(const wxString& title)
-	: wxFrame(NULL, wxID_ANY, title),the_solution(40,30),main_grid(40,30),
-	has_solved(true)
+	: working(false),
+	  wxFrame(NULL, wxID_ANY, title),
+	  the_solution(40,30),main_grid(40,30),
+	  has_solved(true)
 {
 #if wxUSE_MENUS
 	// create a menu bar
@@ -113,6 +115,15 @@ MainFrame::MainFrame(const wxString& title)
 
 }
 
+void MainFrame::UpdateEnabledState()
+{
+	wxMenuBar *menu = GetMenuBar();
+	if(menu==NULL) return;
+	int n_menus = menu->GetMenuCount();
+	for(int i=0;i<n_menus;i++)
+		menu->EnableTop(i,!working);
+	Update();
+}
 
 // event handlers
 
@@ -137,129 +148,6 @@ void MainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 				wxOK | wxICON_INFORMATION,
 				this);
 }
-
-	// slitherlink:
-	// 2d square lattice of values: 0,1,2,3 (usually provided at start of puzzle and fixed)
-	// borders of squares take values: 0,1 (unbonded or bonded)
-	// also a special value for each: -1 (entry unknown)
-	// borders are linked in one continuous loop, with no crossovers
-
-	// slitherlink is NP-complete: checking that problems have unique solutions gets very expensive with
-	// increasing size. but for a given size, e.g. 7x7, we should be able to find enough optimisations
-	// to be able to find unique-solution puzzles
-
-	// problem 1: given a blank world, with N numbers near the middle/corners/sides, 
-	// what 'rules' are there for 0, 1, 2, 3 entries provided?
-	// (e.g. 3 above 3 means we know there are 3 horizontal borders turned on)
-
-	// problem 2: can we solve all published worlds by exhaustive search in reasonable time? 
-	// can we use the rules to speed up the search? so far;yes
-
-	// problem 4: can we generate puzzles that have unique solutions? yes
-
-	// problem 5: can we generate puzzles with a minimal number of entries provided for the size? well, for a given loop, yes.
-
-	// problem 6: can we generate puzzles that are directly solvable without having to follow alternatives? yes, by simply turning
-	//            off recursion in our solver - this yields nicer puzzles without increasing the number of entries required, intriguingly. 
-	//            => the 'unwritten' rules of slitherlink: 0) each puzzle has a unique solution. -1) each puzzle is solvable 
-	//            without having to explore possibilities.
-
-	// problem: can we cast the search problem as a CA?
-
-	// problem: any even-number-sized square grid with a full diagonal of 2's with all their border-pairs pointing the same way 
-	//          has at least one other solution (with border-pairs pointing the other way), hence don't make good puzzles.
-	//          (BTW, any *odd*-number-sized square grid with a full diagonal of 2's has no solutions.) 
-	//          What other such quirks exist?
-
-/* the first locally minimal 10x10 found with this program (~30mins): (back-tracking necessary to solve)
-
-+     +     +     +     +  -  +     +     +  -  +     +     +  
-1           1        |  3  |        1  |  3  |        1     
-+  -  +     +  -  +  -  +     +     +     +     +  -  +  -  +  
-|     |     |  2     1     2  |           |                 |  
-+     +  -  +     +     +  -  +     +     +  -  +  -  +     +  
-|              1        |                          3  |     |  
-+     +     +  -  +  -  +     +  -  +  -  +  -  +  -  +     +  
-|        1  |                 |  2     1     2              |  
-+     +     +  -  +  -  +  -  +     +     +  -  +  -  +  -  +  
-|              1                       2  |        2     1     
-+  -  +     +     +     +     +  -  +  -  +     +  -  +     +  
-3  |  1           1     1  |                 |     |        
-+  -  +     +  -  +  -  +     +  -  +     +  -  +     +  -  +  
-|           |           |  1     3  |     |        0     2  |  
-+     +     +     +  -  +     +  -  +     +  -  +     +     +  
-|  1        |     |  3        |  3           3  |  1        |  
-+     +     +     +  -  +     +  -  +  -  +  -  +     +     +  
-|           |  1        |  1           2     1           2  |  
-+     +  -  +     +     +     +  -  +  -  +     +     +  -  +  
-|  3  |                 |  3  |  2        |           |  2     
-+  -  +     +     +     +  -  +     +     +  -  +  -  +     +  
-(but this is *hard* for humans since it requires extensive back-tracking)
-
-A 30x30 grid that the computer can solve by just applying rules: (otherwise locally minimal)
-+     +  -  +  -  +  -  +  -  +  -  +     +  -  +     +     +     +     +     +     +     +     +  -  +  -  +  -  +  -  +     +  -  +     +  -  +     +     +     +  -  +  -  +     +  
-	|  3     1           2        |     |     |                          0                 1  |  2                 2  |     |     |     |  3  |                 |        2  |  2     
-+     +  -  +     +  -  +  -  +     +     +     +  -  +     +  -  +     +     +  -  +     +     +     +  -  +  -  +     +     +     +  -  +     +  -  +     +  -  +     +     +  -  +  
-			|  3  |        3  |     |  2  |  1     2  |     |  3  |        2  |     |           |  2  |        3  |  2  |     |  1           1     3  |  2  |  2           1     2  |  
-+     +     +  -  +     +  -  +     +     +     +     +  -  +     +  -  +  -  +     +  -  +     +     +     +  -  +     +     +     +  -  +  -  +  -  +     +     +     +  -  +     +  
-					1  |        2  |  2  |  2                 0                       2  |     |     |  2  |        1  |     |     |              1        |        2  |     |     |  
-+     +  -  +     +     +     +  -  +     +  -  +     +     +     +     +  -  +  -  +     +     +  -  +     +     +     +     +     +  -  +  -  +     +     +  -  +  -  +     +     +  
-	|  3  |  1        |     |              2  |  2                 1  |  2        |     |        1     2  |        2  |  2  |  2     2        |                    2     2  |  2  |  
-+     +     +     +  -  +     +  -  +  -  +     +  -  +  -  +  -  +     +     +     +     +  -  +     +  -  +     +  -  +     +  -  +  -  +     +     +  -  +     +  -  +  -  +     +  
-	|     |  3  |        1           2  |  2                 2  |  2  |           |  1     2  |  2  |  2        |  3                    |     |     |  3  |     |        1     1  |  
-+     +     +  -  +     +  -  +     +     +  -  +  -  +  -  +     +     +  -  +     +     +     +     +     +     +  -  +     +  -  +     +     +  -  +     +     +     +     +     +  
-1  |                 |  3  |  2     1                    |  2  |  2     3  |     |  1        |     |        0        |  2  |  3  |  3  |  1              |  3  |  1              |  
-+     +     +  -  +  -  +     +  -  +  -  +     +     +  -  +     +  -  +  -  +     +     +     +     +  -  +     +  -  +     +     +  -  +     +     +     +  -  +     +     +  -  +  
-1  |     |        1           1        |  1        |  3     1     2           1  |        1  |  1     2  |     |           |  1           0           1                    |  3     
-+     +  -  +     +     +     +     +  -  +     +     +  -  +  -  +  -  +     +     +     +     +     +     +     +     +  -  +     +     +     +     +  -  +     +     +     +  -  +  
-			1           0        |                          1     2  |  1        |        1  |  1        |  2  |     |        1           0        |     |  1                 3  |  
-+  -  +  -  +  -  +     +     +     +     +  -  +  -  +  -  +     +     +     +     +     +     +     +     +     +     +  -  +  -  +  -  +     +     +     +     +  -  +     +  -  +  
-|  2              |                 |     |        1     2  |           |        1  |  1        |        1  |  2  |                    3  |  1     2  |     |  3  |     |  2  |        
-+     +     +  -  +     +     +  -  +     +     +     +     +     +  -  +     +     +     +  -  +     +     +     +  -  +     +  -  +  -  +     +  -  +     +  -  +     +     +     +  
-|  1        |  2     0        |  3     1  |              1  |     |              2  |  2  |                 |  1     2  |     |        1        |              1     2  |  2  |        
-+     +     +     +     +     +  -  +     +  -  +  -  +     +  -  +     +     +  -  +     +  -  +  -  +     +     +     +     +     +     +     +     +     +     +  -  +     +  -  +  
-|  2     1  |                       |        1        |        2     1        |  3     1     1     2  |     |        2  |     |        1        |  2     1        |  2     1     3  |  
-+  -  +     +  -  +  -  +  -  +  -  +     +     +  -  +     +  -  +  -  +     +  -  +  -  +     +     +  -  +     +  -  +     +  -  +  -  +     +  -  +  -  +     +     +  -  +  -  +  
-	|        1     1     1           1     2  |  2        |        2  |  2              |  2     0              |  2           2        |                 |  2  |     |              
-+     +     +     +     +     +  -  +  -  +  -  +     +  -  +     +     +  -  +     +     +  -  +     +  -  +  -  +     +     +  -  +     +  -  +  -  +     +     +     +  -  +  -  +  
-	|  2     0              |        2     2        |  3     1           2  |        0        |     |              1        |  3  |  2     1        |     |  2  |  2           2  |  
-+     +  -  +     +     +     +  -  +  -  +  -  +     +  -  +  -  +  -  +     +     +     +  -  +     +     +     +  -  +     +     +  -  +     +     +     +     +  -  +  -  +     +  
-0        |                          2     2  |  2     1     1        |  2  |  1        |        1  |  1        |  3  |     |  1        |           |  2  |  1           3  |     |  
-+     +     +     +  -  +     +     +  -  +     +  -  +     +     +     +     +     +     +     +     +     +  -  +     +  -  +     +     +  -  +  -  +     +     +  -  +  -  +     +  
-		1  |     |  3  |  2        |  3  |           |        1        |  2  |  1     2  |  1        |     |        0           1                 1        |     |  3           2  |  
-+     +     +  -  +     +  -  +  -  +     +     +     +  -  +  -  +  -  +     +     +  -  +     +     +  -  +     +     +  -  +  -  +  -  +     +     +  -  +     +  -  +  -  +  -  +  
-					0     1           1  |        1           2           1  |  2  |              0           1        |  2           2  |  1        |  3           2           2     
-+     +     +     +     +     +  -  +     +  -  +  -  +  -  +  -  +  -  +     +     +  -  +  -  +     +  -  +  -  +  -  +     +     +     +     +     +  -  +  -  +  -  +  -  +  -  +  
-0     0                 2  |     |        1     2                 3  |     |              2  |     |        1     1     1           2  |  1     0           2                 3  |  
-+     +     +  -  +  -  +  -  +     +     +     +  -  +  -  +  -  +  -  +     +  -  +  -  +     +     +     +     +     +  -  +     +  -  +     +     +  -  +  -  +  -  +  -  +  -  +  
-		1  |        1              |        1  |  2           1           0              |     |     |        1     2  |  3  |     |        0     1  |        1     1           1     
-+     +     +  -  +     +     +  -  +     +     +     +     +     +     +     +  -  +     +  -  +     +  -  +  -  +  -  +     +     +     +     +     +     +     +     +  -  +     +  
-0              |        1  |        1        |  2                       1  |  3  |              1     1     1              |     |  1           1  |  2     1        |     |        
-+     +  -  +     +  -  +     +  -  +  -  +     +  -  +     +  -  +     +     +     +  -  +  -  +  -  +     +     +     +     +     +     +  -  +     +  -  +  -  +  -  +     +     +  
-	|  3  |           |              2  |  2        |     |  3  |  1        |                    2  |  2           0        |     |  2  |  3  |  2                       2  |  1     
-+     +     +  -  +     +     +     +     +  -  +  -  +     +     +     +     +  -  +  -  +  -  +     +  -  +  -  +     +  -  +     +     +     +  -  +  -  +  -  +     +  -  +     +  
-	|  1        |     |  1     1     1                    |     |  1           2     2        |        1        |  2  |        1  |     |  2     2           3  |     |  3           
-+     +     +     +     +     +  -  +  -  +  -  +  -  +     +     +     +  -  +  -  +  -  +     +     +     +     +     +     +     +     +  -  +  -  +     +  -  +     +  -  +     +  
-	|        1  |     |     |  2     1     2     2  |  3  |     |  2  |  3     2     2  |     |  1     1        |  2  |           |  1              |     |        0        |        
-+     +     +     +     +  -  +     +     +  -  +     +  -  +     +     +  -  +  -  +     +  -  +     +  -  +  -  +     +  -  +     +     +     +     +     +  -  +     +     +  -  +  
-2  |  1        |  2                    |  3  |                 |              3  |        1        |                       |  2  |  2     0        |  1        |              2  |  
-+  -  +     +     +  -  +  -  +     +  -  +     +     +     +  -  +     +     +  -  +     +     +     +     +  -  +  -  +  -  +     +  -  +     +     +     +     +     +  -  +     +  
-|  3     1           2     2  |     |        2  |           |              1  |  3                    |     |  3                          |           |  2     1  |  2  |  3  |     |  
-+  -  +  -  +  -  +  -  +     +  -  +     +  -  +     +  -  +     +  -  +     +  -  +  -  +  -  +     +     +  -  +     +  -  +  -  +  -  +     +     +  -  +     +     +     +     +  
-		1           3  |                 |  3        |  3     2  |  3  |        1              |  2  |        3  |     |  3     1     1                    |     |     |     |  3  |  
-+     +     +     +  -  +     +     +     +  -  +     +  -  +  -  +     +     +     +     +     +     +  -  +  -  +     +  -  +     +     +  -  +  -  +     +     +  -  +     +  -  +  
-				|        0     0     0     2  |        1     1        |                    2  |  1                 1        |        1  |  2        |     |  1     2     0           
-+     +  -  +     +     +     +     +     +     +  -  +     +     +  -  +     +  -  +  -  +  -  +     +  -  +  -  +  -  +  -  +     +     +     +     +     +     +  -  +     +     +  
-1  |  3  |     |                          1        |  2     2  |  2        |  2           1        |  3                       0        |           |     |  3  |  3  |        0     
-+     +     +  -  +     +     +  -  +  -  +  -  +     +  -  +  -  +     +  -  +     +  -  +     +     +  -  +  -  +     +  -  +     +  -  +     +     +     +  -  +     +  -  +     +  
-1  |        1     1        |              2  |  2                 1  |           |  3  |              1     2  |  3  |     |     |  3           1  |  2           0        |        
-+     +     +     +  -  +     +  -  +  -  +     +  -  +  -  +  -  +     +  -  +  -  +     +     +  -  +     +     +  -  +     +     +  -  +     +     +  -  +     +     +     +     +  
-	|           |  3  |        2        |        1           3  |  1     1           1  |     |  3  |        1              |  1        |              3  |              1  |        
-+  -  +     +  -  +     +  -  +  -  +     +  -  +     +  -  +  -  +     +     +     +     +  -  +     +  -  +  -  +     +     +     +     +  -  +     +  -  +     +  -  +     +     +  
-|  3        |  2     0     1     2  |           |  2  |        2     1     1                       1           3  |  1        |        1     3  |     |        2  |     |  3  |        
-+  -  +  -  +     +     +     +     +  -  +  -  +     +  -  +  -  +  -  +  -  +  -  +  -  +  -  +  -  +  -  +  -  +     +     +  -  +  -  +  -  +     +  -  +  -  +     +  -  +     +  
-
-*/
 
 void MainFrame::OnSearchForSolutions(wxCommandEvent &event)
 {
@@ -388,10 +276,10 @@ void MainFrame::OnPaint(wxPaintEvent &event)
 {
 	wxPaintDC dc(this);
 	
-	// recompute the drawing parameters (could be resize or init, or perhaps a toolbar change, best to be safe?)
+	// recompute the drawing parameters (could store until resize or init, or perhaps a toolbar change, best to be safe?)
 	wxRect r(0,0,dc.GetSize().x,dc.GetSize().y);
 	ComputeDrawingCoordinates(this->main_grid,r,this->origin,this->cell_size);
-	// (we store origin and size so that mouse clicks can be related to the grid easily)
+	// (we store origin and size so that mouse clicks can be related to the as-last-drawn grid easily)
 	
 	// blank the area
 	dc.SetBrush(*wxWHITE_BRUSH);
@@ -403,12 +291,18 @@ void MainFrame::OnPaint(wxPaintEvent &event)
 
 void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 {
-	this->main_grid = SlinkerGrid(15,10);
+	working = true;
+	UpdateEnabledState();
+	
+	// pick a random shape
+	SlinkerGrid::TGridShape gs;
+	switch(rand()%3) {case 0: gs=SlinkerGrid::RectangleShape; break; case 1: gs=SlinkerGrid::MissingCentre; break; case 2: default: gs=SlinkerGrid::CircleShape; break; }
+	this->main_grid = SlinkerGrid(15,21,gs);
 	this->main_grid.InitGridWithSeedLoop();
 	wxLogStatus(wxT("Starting with a single-cell loop..."));
 	Refresh(false);
 	Update();
-	wxYield();
+	//wxYield();
 	wxSleep(3);
 	vector<SlinkerGrid::TRule> growth_rules = SlinkerGrid::GetGrowthRules();
 	const int N = this->main_grid.GetX() * this->main_grid.GetY() * 3;
@@ -419,7 +313,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 		this->main_grid.GrowLoop(growth_rules,prob_divs);
 		Refresh(false);
 		Update();
-		wxMilliSleep(1);
+		//wxMilliSleep(1);
 		wxYield();
 	}
 	wxLogStatus(wxT("3 rules in balance : a looser, more interesting loop..."));
@@ -429,7 +323,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 		this->main_grid.GrowLoop(growth_rules,prob_divs);
 		Refresh(false);
 		Update();
-		wxMilliSleep(1);
+		//wxMilliSleep(1);
 		wxYield();
 	}
 	wxLogStatus(wxT("Rules 1 and 3 only : loop adopts minimal curvature and shrinks..."));
@@ -439,10 +333,13 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 		if(!this->main_grid.GrowLoop(growth_rules,prob_divs)) break;
 		Refresh(false);
 		Update();
-		wxMilliSleep(1);
+		//wxMilliSleep(1);
 		wxYield();
 	}
 	wxLogStatus(wxT(""));
+	
+	working = false;
+	UpdateEnabledState();
 }
 
 bool MainFrame::AskUserForSolvingRulesFile()
@@ -547,7 +444,9 @@ void MainFrame::OnMakeAPuzzle(wxCommandEvent& event)
 
 	wxLogStatus(_T("Working... (may take some time for larger puzzles)"));
 	wxBusyCursor busy;
-
+	working=true;
+	UpdateEnabledState();
+	
 	SlinkerGrid g(size.x,size.y,grid_shape);
 	g.MakePuzzle(this->solving_rules,guessing_allowed);
 	this->the_solution = g;
@@ -557,6 +456,8 @@ void MainFrame::OnMakeAPuzzle(wxCommandEvent& event)
 	
 	wxLogStatus(_T(""));
 	Refresh(false);
+	working=false;
+	UpdateEnabledState();
 }
 
 wxPoint MainFrame::GetGridCoords(wxPoint p)
@@ -643,6 +544,7 @@ void MainFrame::OnExportLoopyPuzzleString(wxCommandEvent& event)
 		wxMessageBox(_T("Non-rectangular puzzles not supported."));
 		return;
 	}
+	
 	wxGetTextFromUser(_T("(copy and paste this text into Loopy)"),_T("Puzzle as a Loopy format string:"),
 		wxString(this->main_grid.GetPuzzleInLoopyFormat().c_str(),wxConvUTF8));
 }
@@ -651,10 +553,17 @@ void MainFrame::OnAnalyzePuzzleDifficulty(wxCommandEvent& event)
 {
 	this->solving_rules.clear();
 	AskUserForSolvingRulesFile(); // (they can cancel, and we will try to solve without rules, which might be slow)
+	
 	wxBusyCursor busy;
 	wxLogStatus(wxT("Working..."));
+	working=true;
+	UpdateEnabledState();
+	
 	wxMessageBox(wxString(this->main_grid.GetPuzzleAnalysis(this->solving_rules).c_str(),wxConvUTF8));
+	
 	wxLogStatus(wxT(""));
+	working=false;
+	UpdateEnabledState();
 }
 
 void MainFrame::OnClear(wxCommandEvent &event)

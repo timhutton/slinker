@@ -108,19 +108,29 @@ bool SlinkerGrid::IsOnGrid(int x,int y) const
 			}
 		case CircleShape:
 			{
-				if(X!=Y) throw(runtime_error("IsOnGrid: X and Y must be equal."));
-				//if(2*int(X/2)!=X) throw(runtime_error("IsOnGrid: X must be even."));
-				int mid = (2*X+1)/2;
-				int r = (2*X+1)/2; // radius of inset circle
+				// make a test x and y, based on a square (an oval is a flattened circle)
+				int tx=x,ty=y;
+				if(X<Y) tx = tx*Y/X;
+				else if(Y<X) ty = ty*X/Y;
+				int mid = (2*max(X,Y)+1)/2;
+				int r = mid; // radius of inset circle
+				// TODO: this isn't quite right, we want symmetrical ovals
+				if(false)
+				{ // DEBUG
+					ostringstream oss;
+					oss << X << "," << Y << " grid:\n\n" << x << "," << y << " becomes " << tx << "," 
+						<< ty << "\n\nmid=r=" << mid;
+					wxMessageBox(wxString(oss.str().c_str(),wxConvUTF8));
+				}
 				if(IsCell(x,y))
-					return(hypot(mid-x,mid-y)<=r);
+					return(hypot(mid-tx,mid-ty)<=r);
 				else if(IsHorizontalBorder(x,y))
-					return(hypot(mid-x,mid-(y-1))<=r || hypot(mid-x,mid-(y+1))<=r);
+					return(hypot(mid-tx,mid-(ty-1))<=r || hypot(mid-tx,mid-(ty+1))<=r);
 				else if(IsVerticalBorder(x,y))
-					return(hypot(mid-(x-1),mid-y)<=r || hypot(mid-(x+1),mid-y)<=r);
+					return(hypot(mid-(tx-1),mid-ty)<=r || hypot(mid-(tx+1),mid-ty)<=r);
 				else if(IsDot(x,y))
-					return(hypot(mid-(x-1),mid-(y-1))<=r || hypot(mid-(x+1),mid-(y-1))<=r ||
-						hypot(mid-(x+1),mid-(y+1))<=r || hypot(mid-(x-1),mid-(y+1))<=r);
+					return(hypot(mid-(tx-1),mid-(ty-1))<=r || hypot(mid-(tx+1),mid-(ty-1))<=r ||
+						hypot(mid-(tx+1),mid-(ty+1))<=r || hypot(mid-(tx-1),mid-(ty+1))<=r);
 			}
 	}
 	throw(runtime_error("Internal error: unknown grid type in IsOnGrid."));
@@ -1539,7 +1549,26 @@ string SlinkerGrid::GetPuzzleAnalysis(const std::vector<TRule>& solving_rules) c
 	{
 		oss << "Puzzle can be solved with the supplied rules.\n";
 		if(no_guessing_solutions.size()==1)
-			oss << "Puzzle has a unique solution.\n";
+		{
+			oss << "Puzzle has a unique solution.\n\n";
+			// work out the rules that need be applied
+			const int MAX_ELEMENTS=6;
+			vector<int> n_of_each_class(MAX_ELEMENTS,0);
+			int iRule,iSymm,n_req;
+			wxPoint pos;
+			while(g.GetAValidMove(solving_rules,iRule,pos,iSymm))
+			{
+				if(iRule>13) // we assume a standard set is being used, with the first 13 rules being elemental
+				{
+					n_req = solving_rules[iRule].required.size();
+					if(n_req<MAX_ELEMENTS)
+						n_of_each_class[n_req]++;
+				}
+				g.ApplyRule(solving_rules[iRule],pos,iSymm);
+			}
+			for(int i=2;i<MAX_ELEMENTS;i++)
+				oss << "Number of " << i << "-element rule-applications needed: " << n_of_each_class[i] << "\n";
+		}
 		else
 			oss << "Puzzle has multiple solutions.\n";
 	}

@@ -17,6 +17,10 @@
 	along with Slinker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// wxWidgets
+#include <wx/artprov.h>
+
+// local
 #include "RuleDepictionDialog.h"
 #include "DrawSlinkerGrid.h"
 
@@ -29,9 +33,11 @@ BEGIN_EVENT_TABLE(RuleDepictionDialog, wxDialog)
 
 END_EVENT_TABLE()
 
+const wxSize RuleDepictionDialog::initial_size(450,200);
+
 RuleDepictionDialog::RuleDepictionDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 	const SlinkerGrid& before,const SlinkerGrid& after)
-		: wxDialog(parent,id,title,wxPoint(0,0),wxSize(700,300),wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER),
+		: wxDialog(parent,id,title,wxPoint(0,0),initial_size,wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER),
 		  req(before),impl(after)
 {
 }
@@ -42,12 +48,16 @@ void RuleDepictionDialog::OnPaint(wxPaintEvent& event)
 	// blank the area
 	dc.SetBrush(*wxWHITE_BRUSH);
 	dc.DrawRectangle(0,0,dc.GetSize().x,dc.GetSize().y);
+	// draw the two grids
 	wxPoint origin;
 	int cell_size;
-	int one_side_size = dc.GetSize().x*3/7;
+	int one_side_size = dc.GetSize().x*initial_size.GetHeight()/initial_size.GetWidth();
 	wxRect r1(0,0,one_side_size,dc.GetSize().y);
 	ComputeDrawingCoordinates(req,r1,origin,cell_size);
 	DrawGrid(req,dc,origin,cell_size);
 	wxPoint o2(origin.x+(dc.GetSize().x-one_side_size),origin.y);
 	DrawGrid(impl,dc,o2,cell_size);
+	// draw an arrow in between
+	wxBitmap bmp = wxArtProvider::GetBitmap(wxART_GO_FORWARD);
+	dc.DrawBitmap(bmp,dc.GetSize().x/2-bmp.GetWidth()/2,dc.GetSize().y/2-bmp.GetHeight()/2);
 }

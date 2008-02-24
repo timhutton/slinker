@@ -60,8 +60,10 @@ bool App::OnInit()
 
 int App::OnRun()
 {
-	try { return wxApp::OnRun(); }
-	catch(exception &e)
+	try { 
+		return wxApp::OnRun(); 
+	}
+	catch(const exception &e)
 	{
 		wxMessageBox(wxString(e.what(),wxConvUTF8),
 			wxT("Exception thrown:"),
@@ -70,7 +72,9 @@ int App::OnRun()
 	}
 	catch(...)
 	{
-		// some other error thrown... :(
+		wxMessageBox(_T("Unknown exception."),
+			wxT("Exception thrown:"),
+			wxICON_EXCLAMATION);		
 		return -1;
 	}
 }
