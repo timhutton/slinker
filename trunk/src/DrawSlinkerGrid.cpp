@@ -21,12 +21,13 @@
 
 #include <algorithm>
 
+
 void ComputeDrawingCoordinates(const SlinkerGrid& g,const wxRect& r,wxPoint& origin,int& cell_size)
 {
 	const int BORDER = 10;
 	const int X = g.GetX();
 	const int Y = g.GetY();
-	cell_size = std::min((r.GetWidth()-BORDER*2)/X,(r.GetHeight()-BORDER*2)/Y);
+	cell_size = tjh_min((r.GetWidth()-BORDER*2)/X,(r.GetHeight()-BORDER*2)/Y);
 	origin.x = (r.GetRight()+r.GetLeft())/2 - (cell_size * X)/2;
 	origin.y = (r.GetBottom()+r.GetTop())/2 - (cell_size * Y)/2;
 }
@@ -40,6 +41,8 @@ void DrawCross(wxDC& dc,wxPoint p,int cell_size)
 	dc.DrawLine(p.x-r,p.y+r,p.x+r,p.y-r);
 	dc.SetPen(wxNullPen);
 }
+
+int wxRound(float f) { return (f-floor(f)>=0.5f)?int(ceil(f)):int(floor(f)); }
 
 void DrawGrid(const SlinkerGrid& g,wxDC& dc,wxPoint origin,int cell_size)
 {
