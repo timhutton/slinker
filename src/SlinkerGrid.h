@@ -23,6 +23,11 @@
 #include <vector>
 #include <string>
 
+// these things here only because on MSVC5 w/ wxWidgets 2.6.2 we had compilation issues
+int tjh_max(int a,int b);
+int tjh_min(int a,int b);
+int tjh_wxRound(float f);
+
 /// This class represents a slitherlink grid, and implements algorithms for solving puzzles and making them.
 class SlinkerGrid
 {
@@ -222,8 +227,8 @@ class SlinkerGrid
 		static const int NHOOD[4][2];
 
 		/// the 8 symmetries (reflections and rotations)
-		static const int N_SYMMETRIES = 8;
-		static const TMatrix SYMMETRIES[N_SYMMETRIES];
+		static const int N_SYMMETRIES;
+		static const TMatrix SYMMETRIES[];
 
 	private: // private methods
 

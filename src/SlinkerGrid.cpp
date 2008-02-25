@@ -30,12 +30,21 @@
 #include <fstream>
 using namespace std;
 
+#include <stdlib.h>
+
+// these things here only because on MSVC5 w/ wxWidgets 2.6.2 we had compilation issues
+int tjh_max(int a,int b) { return (a>b)?a:b; }
+int tjh_min(int a,int b) { return (a<b)?a:b; }
+int tjh_wxRound(float f) { return (f-floor(f)>=0.5f)?int(ceil(f)):int(floor(f)); }
+
 /// ---------- statics -------------
 
 const int SlinkerGrid::UNKNOWN = -1;
 // (we should be able to put this value in the header file but gcc doesn't like it)
 
 const int SlinkerGrid::NHOOD[4][2] = { {-1,0}, { 0,-1}, {1,0}, {0,1} };
+
+const int SlinkerGrid::N_SYMMETRIES = 8;
 
 const SlinkerGrid::TMatrix SlinkerGrid::SYMMETRIES[N_SYMMETRIES] = {
 	TMatrix(1,0,0,1), // identity
@@ -64,9 +73,9 @@ SlinkerGrid::SlinkerGrid() : X(0),Y(0),grid_shape(RectangleShape)
 
 SlinkerGrid::SlinkerGrid(int x,int y,TGridShape gs) 
 	: X(x), Y(y), 
-	cells(2*X+1,vector<int>(2*Y+1,UNKNOWN)), // init array of values all filled with UNKNOWN
 	grid_shape(gs)
 {
+	cells.assign(2*X+1,vector<int>(2*Y+1,UNKNOWN)); // init array of values all filled with UNKNOWN
 }
 
 SlinkerGrid::SlinkerGrid(const SlinkerGrid& g)
@@ -87,6 +96,9 @@ bool SlinkerGrid::operator==(const SlinkerGrid& g) const
 {
 	return(X==g.X && Y==g.Y && grid_shape==g.grid_shape && cells==g.cells);
 }
+
+int max(int a,int b) { return (a>b)?a:b; }
+int min(int a,int b) { return (a<b)?a:b; }
 
 bool SlinkerGrid::IsOnGrid(int x,int y) const
 {
@@ -134,6 +146,7 @@ bool SlinkerGrid::IsOnGrid(int x,int y) const
 			}
 	}
 	throw(runtime_error("Internal error: unknown grid type in IsOnGrid."));
+	return false;
 }
 
 bool SlinkerGrid::IsLegal() const
@@ -1096,13 +1109,14 @@ void SlinkerGrid::FindNonRedundantRules(const std::vector<TRule> &rules,vector<T
 		}
 		// make a test grid of the input
 		g.Clear();
-		for(vector<TElement>::const_iterator rule_it = it1->required.begin();rule_it!=it1->required.end();rule_it++)
+		vector<TElement>::const_iterator rule_it;
+		for(rule_it = it1->required.begin();rule_it!=it1->required.end();rule_it++)
 			g.cells[rule_it->x+spx][rule_it->y+spy] = rule_it->val;
 		// apply the test set of rules
 		g.ApplyRules(test_set,changed);
 		// is there any implied that isn't present? if so then we keep this rule
 		bool done=false;
-		for(vector<TElement>::const_iterator rule_it = it1->implied.begin();rule_it!=it1->implied.end() && !done;rule_it++)
+		for(rule_it = it1->implied.begin();rule_it!=it1->implied.end() && !done;rule_it++)
 		{
 			if(g.cells[rule_it->x+spx][rule_it->y+spy]==UNKNOWN)
 			{
@@ -1603,7 +1617,7 @@ bool SlinkerGrid::GetAValidMove(const std::vector<TRule>& rules,int& iRule,wxPoi
 {
 	// TODO: should code-share with ApplyRules if can maintain efficiency
 	vector<TElement>::const_iterator it;
-	bool can_apply,is_useful;
+	bool can_apply;
 	int tx,ty;
 	for(iRule=0;iRule<rules.size();iRule++)
 	{

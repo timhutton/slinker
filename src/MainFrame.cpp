@@ -80,12 +80,13 @@ MainFrame::MainFrame(const wxString& title)
 	
 	{
 		wxMenu *fileMenu = new wxMenu;
-		wxMenu *exportMenu = new wxMenu;
-		exportMenu->Append(ID::ExportLoopyPuzzleString,_T("Loopy format string"),_T("Export the puzzle as a 'specific' string that Loopy can read."));
-		fileMenu->AppendSubMenu(exportMenu,_T("&Export"),_T("Export the current puzzle in various formats."));
-		wxMenu *importMenu = new wxMenu;
-		importMenu->Append(ID::ImportLoopyPuzzleString,_T("Loopy format string"),_T("Import a 'specific' Loopy puzzle string."));
-		fileMenu->AppendSubMenu(importMenu,_T("&Import"),_T("Import puzzles in various formats."));
+		// (wx2.6.2 didn't have wxMenu::AppendSubMenu)
+		//wxMenu *exportMenu = new wxMenu;
+		fileMenu/*exportMenu*/->Append(ID::ExportLoopyPuzzleString,_T("Export Loopy format string"),_T("Export the puzzle as a 'specific' string that Loopy can read."));
+		//fileMenu->AppendSubMenu(exportMenu,_T("&Export"),_T("Export the current puzzle in various formats."));
+		//wxMenu *importMenu = new wxMenu;
+		fileMenu/*importMenu*/->Append(ID::ImportLoopyPuzzleString,_T("Import Loopy format string"),_T("Import a 'specific' Loopy puzzle string."));
+		//fileMenu->AppendSubMenu(importMenu,_T("&Import"),_T("Import puzzles in various formats."));
 		fileMenu->AppendSeparator();
 		fileMenu->Append(ID::Minimal_Quit, _T("E&xit\tAlt-X"), _T("Quit this program"));
 		menuBar->Append(fileMenu, _T("&File"));
@@ -224,7 +225,8 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 	const int N = this->main_grid.GetX() * this->main_grid.GetY() * 3;
 	wxLogStatus(wxT("Rules 1 and 2 only : a maximally-filled grid is predictable..."));
 	int prob_divs[]={50,100}; // tight grid
-	for(int i=0;i<N;i++)
+	int i;
+	for(i=0;i<N;i++)
 	{
 		this->main_grid.GrowLoop(growth_rules,prob_divs);
 		Refresh(false);
@@ -234,7 +236,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 	}
 	wxLogStatus(wxT("3 rules in balance : a looser, more interesting loop..."));
 	prob_divs[1]=80; // looser grid
-	for(int i=0;i<N*2;i++)
+	for(i=0;i<N*2;i++)
 	{
 		this->main_grid.GrowLoop(growth_rules,prob_divs);
 		Refresh(false);
@@ -244,7 +246,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 	}
 	wxLogStatus(wxT("Rules 1 and 3 only : loop adopts minimal curvature and shrinks..."));
 	prob_divs[1]=50; // shrinkage only
-	for(int i=0;i<N*8;i++)
+	for(i=0;i<N*8;i++)
 	{
 		if(!this->main_grid.GrowLoop(growth_rules,prob_divs)) break;
 		Refresh(false);
@@ -401,7 +403,7 @@ wxPoint MainFrame::GetGridCoords(wxPoint p)
 	double px,py;
 	px = 2.0 * (p.x - this->origin.x ) / this->cell_size;
 	py = 2.0 * (p.y - this->origin.y ) / this->cell_size;
-	wxPoint gp = wxPoint(wxRound(px),wxRound(py));
+	wxPoint gp = wxPoint(tjh_wxRound(px),tjh_wxRound(py));
 	return gp;
 }
 
