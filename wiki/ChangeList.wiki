@@ -1,5 +1,4 @@
 #summary Changes to Slinker in each release
-#labels Phase-Design
 
 ==== Changes up to Release 0.1.1 ====
 
