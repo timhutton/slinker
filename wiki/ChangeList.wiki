@@ -1,0 +1,10 @@
+#summary Changes to Slinker in each release
+#labels Phase-Design
+
+==== Changes up to Release 0.1.1 ====
+
+  * patch release to allow installing on more Windows platforms
+
+==== Changes up to Release 0.1.0 ====
+
+  * first revision
