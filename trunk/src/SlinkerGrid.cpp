@@ -18,19 +18,20 @@
 */
 
 // if you want to use SlinkerGrid with your own interface then you can remove all wxWidgets specific things, including
-// this include and all calls to wxLogStatus and wxMessageBox.
+// this include and all calls to wxLogStatus and wxMessageBox, etc. (were only there for debugging)
 #include "wxWidgets_standard_headers.h"
 
+// local:
 #include "SlinkerGrid.h"
 #include "next_combination.h"
+#include "IndexedComparison.h"
 
+// STL:
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
 #include <fstream>
 using namespace std;
-
-#include <stdlib.h>
 
 // these things here only because on MSVC5 w/ wxWidgets 2.6.2 we had compilation issues
 int tjh_max(int a,int b) { return (a>b)?a:b; }
@@ -57,8 +58,8 @@ const SlinkerGrid::TMatrix SlinkerGrid::SYMMETRIES[N_SYMMETRIES] = {
 	TMatrix(0,-1,-1,0) // reflection in x then 270 degrees ccwise
 };
 
-bool SlinkerGrid::IsOdd(int a) { return (a&1)==1; }
-bool SlinkerGrid::IsEven(int a) { return (a&1)==0; } 
+bool SlinkerGrid::IsOdd(int a) { return (abs(a)&1)==1; } // abs here to extend test to negative numbers safely
+bool SlinkerGrid::IsEven(int a) { return (abs(a)&1)==0; } 
 bool SlinkerGrid::IsDot(int x,int y) { return( IsEven(x) && IsEven(y) ); }
 bool SlinkerGrid::IsBorder(int x,int y) { return( IsEven(x)^IsEven(y) ); }
 bool SlinkerGrid::IsCell(int x,int y) { return( IsOdd(x) && IsOdd(y) ); }
@@ -281,21 +282,33 @@ bool SlinkerGrid::IsFinished() const
 int& SlinkerGrid::cellValue(int x,int y)
 {
 	if(x<0 || x>=X || y<0 || y>=Y)
-		throw(out_of_range("out of range exception in SlinkerGrid::cellValue"));
+	{
+		ostringstream oss;
+		oss << "out of range exception in SlinkerGrid::cellValue : " << x << "," << y;
+		throw(out_of_range(oss.str().c_str()));
+	}
 	return this->cells[2*x+1][2*y+1];
 }
 
 const int& SlinkerGrid::cellValue(int x,int y) const
 {
 	if(x<0 || x>=X || y<0 || y>=Y)
-		throw(out_of_range("out of range exception in SlinkerGrid::cellValue"));
+	{
+		ostringstream oss;
+		oss << "out of range exception in SlinkerGrid::cellValue : " << x << "," << y;
+		throw(out_of_range(oss.str().c_str()));
+	}
 	return this->cells[2*x+1][2*y+1];
 }
 
 int& SlinkerGrid::gridValue(int x,int y)
 {
 	if(!IsOnGrid(x,y))
-		throw(out_of_range("out of range exception in SlinkerGrid::gridValue"));
+	{
+		ostringstream oss;
+		oss << "out of range exception in SlinkerGrid::gridValue : " << x << "," << y;
+		throw(out_of_range(oss.str().c_str()));
+	}
 	return this->cells[x][y];
 }
 
@@ -481,7 +494,7 @@ bool SlinkerGrid::GrowLoop(const vector<TRule>& growth_rules,const int* prob_div
 				ty = y + SYMMETRIES[iSymm].mY(it->x,it->y);
 				if(IsOnGrid(tx,ty) && cells[tx][ty] != it->val)
 				{
-					cells[tx][ty] = it->val==1?1:UNKNOWN;
+					cells[tx][ty] = (it->val==1)?1:UNKNOWN;
 				}
 			}
 			return true;
@@ -534,7 +547,7 @@ bool SlinkerGrid::ApplyRules(const vector<TRule>& rules,vector<int*> &changed)
 			{
 				for(y=-1;y<2*Y+1+1;y++)
 				{
-					if(!IsCell(x+2,y+2)) continue;
+					if(!IsCell(x,y)) continue;
 					// does the rule apply here (centred on cell x,y) in any orientation?
 					for(iSymm=0;iSymm<N_SYMMETRIES;iSymm++)
 					{
@@ -689,7 +702,7 @@ std::vector<SlinkerGrid> SlinkerGrid::FindSolutions(const vector<TRule> &rules,b
 	return solutions;
 }
 
-void SlinkerGrid::MakePuzzle(const vector<TRule>& rules,bool guessing_allowed)
+void SlinkerGrid::MakePuzzleByRemovingRandomClues(const vector<TRule>& rules,bool guessing_allowed)
 {
 	bool no_unique_solutions = false;
 	do
@@ -758,6 +771,118 @@ void SlinkerGrid::MakePuzzle(const vector<TRule>& rules,bool guessing_allowed)
 			no_unique_solutions = false;
 		}
 	} while(no_unique_solutions);
+}
+
+void SlinkerGrid::MakePuzzleByAddingClues(const vector<TRule>& rules,bool guessing_allowed)
+{
+	SlinkerGrid the_solution;
+
+	// first find a loop that gives a unique solution if all clues are given
+	while(true)
+	{
+		// first fill the grid with a nice loop
+		FillGridWithRandomLoop();
+	
+		ClearBorders();
+		vector<SlinkerGrid> solutions = FindSolutions(rules,true,2);
+		if(solutions.size()==1) 
+		{
+			the_solution = solutions.front();
+			break;
+		}
+	}
+	
+	// compute the difficulty of each rule and sort them
+	vector<TRule> sorted_rules(rules);
+	vector<double> sorted_rule_difficulty;
+	SortRulesByIncreasingDifficulty(sorted_rules,sorted_rule_difficulty);
+	
+	// now add clues one by one until the solution is implied (hence unique)
+	Clear();
+	bool all_done;
+	vector<int*> changed;
+	int n_added=0;
+	int x,y;
+	int tx,ty;
+	while(true)
+	{
+		{
+			ostringstream oss;
+			oss << "Added " << n_added++ << " clues...";
+			wxLogStatus(wxString(oss.str().c_str(),wxConvUTF8));
+		}
+		// collect a list of clues we could add that give us something useful
+		vector<wxPoint> candidates;
+		for(x=0;x<X;x++)
+		{
+			for(y=0;y<Y;y++)
+			{
+				if(!IsOnGrid(2*x+1,2*y+1) || cellValue(x,y)!=UNKNOWN) continue;
+				// would this clue give us something useful?
+				cellValue(x,y) = the_solution.cellValue(x,y);
+				ApplyRules(sorted_rules,changed);
+				if(!changed.empty())
+				{
+					UndoChanges(changed);
+					candidates.push_back(wxPoint(x,y));
+				}
+				cellValue(x,y) = UNKNOWN;
+			}
+		}
+		
+		if(candidates.empty())
+			break; // no clues would help - we're done (though might not be solvable...!)
+		
+		{
+			// simply take one at random (until we find a better one)
+			int i = rand() % candidates.size();
+			x = candidates[i].x;
+			y = candidates[i].y;
+		}
+		
+		// decide which clue to add
+		{
+			// compute the max difficulty level of the rules that can be applied for each candidate clue
+			double greatest_diff=0.0,diff;
+			// take the clue that calls for the most difficult rules
+			vector<TRule> ruleset;
+			for(vector<wxPoint>::const_iterator cand_it=candidates.begin();cand_it!=candidates.end();cand_it++)
+			{
+				ruleset.clear();
+				for(vector<TRule>::const_iterator r_it=sorted_rules.begin();r_it!=sorted_rules.end();r_it++)
+				{
+					ruleset.push_back(*r_it);
+					ApplyRules(ruleset,changed);
+					if(!changed.empty())
+					{
+						diff = sorted_rule_difficulty[r_it-sorted_rules.begin()];
+						if(diff>greatest_diff)
+						{
+							greatest_diff = diff;
+							x = cand_it->x;
+							y = cand_it->y;
+						}
+						UndoChanges(changed);
+					}
+				}
+			}
+		}
+		
+		// add the clue and see how far it gets us
+		cellValue(x,y) = the_solution.cellValue(x,y);
+		ApplyRules(rules,changed);
+		// if every "on" border of the_solution is now present, we're done
+		all_done=true;
+		for(tx=0;tx<2*X+1 && all_done;tx++)
+		{
+			for(ty=0;ty<2*Y+1 && all_done;ty++)
+			{
+				if(IsBorder(tx,ty) && IsOnGrid(tx,ty) && the_solution.gridValue(tx,ty)==1 && gridValue(tx,ty)!=1)
+					all_done = false;
+			}
+		}
+		if(all_done) break;
+	}
 }
 
 // compute the binomial coefficient "m choose n" (e.g. 100 choose 2 = 4950; 6 choose 4 = 15)
@@ -1091,7 +1216,7 @@ void SlinkerGrid::FindNonRedundantRules(const std::vector<TRule> &rules,vector<T
 	nonredundant_rules.clear(); // don't want to leave any in there
 
 	vector<TRule> test_set;
-	const int N=20;// size not really important here as long as it's big enough
+	const int N=10;// size not really important here as long as it's big enough
 	SlinkerGrid g(N,N); 
 	int spx = N/2,spy=N/2;
 	if(IsDot(spx,spy)) spx=spy=spy+1;
@@ -1107,13 +1232,18 @@ void SlinkerGrid::FindNonRedundantRules(const std::vector<TRule> &rules,vector<T
 			if(it2!=it1)
 				test_set.push_back(*it2);
 		}
+		
 		// make a test grid of the input
 		g.Clear();
 		vector<TElement>::const_iterator rule_it;
 		for(rule_it = it1->required.begin();rule_it!=it1->required.end();rule_it++)
+		{
 			g.cells[rule_it->x+spx][rule_it->y+spy] = rule_it->val;
+		}
+			
 		// apply the test set of rules
 		g.ApplyRules(test_set,changed);
+		
 		// is there any implied that isn't present? if so then we keep this rule
 		bool done=false;
 		for(rule_it = it1->implied.begin();rule_it!=it1->implied.end() && !done;rule_it++)
@@ -1121,7 +1251,7 @@ void SlinkerGrid::FindNonRedundantRules(const std::vector<TRule> &rules,vector<T
 			if(g.cells[rule_it->x+spx][rule_it->y+spy]==UNKNOWN)
 			{
 				nonredundant_rules.push_back(*it1);
-				done = true;
+				done=true;
 			}
 		}
 	}
@@ -1180,7 +1310,8 @@ void SlinkerGrid::GetElementarySolvingRules(vector<TRule> &rules)
 	// This is a compressed set of rules - using contradictions to reduce the number of rules to
 	// a minimum (8). You can use this set with FindNewRules to find more, and FindNewRules forbids small loops, 
 	// so together with that heuristic, these 8 rules give you the seed to find *all* slitherlink rules, up to
-	// whatever rule size you like.
+	// whatever rule size you like. (Not including highlander rules, which make an extra assumption that a unique
+	// solution exists.)
 	
 	// FindNewRules will give you the more familiar forms of these rules, without contradictions, a set of 13. 
 	// These 13 are the ones we include in our elementary_rules.txt, simply because they are easier to understand.
@@ -1393,14 +1524,11 @@ void SlinkerGrid::ReadRulesFromFile(const string &filename,vector<TRule> &rules)
 		{
 			// this must be an element line, read it in
 			TElement el(INT_MAX,INT_MAX,INT_MAX);
-			istringstream iss(line);
-			char c1,c2;
-			iss >> el.x >> c1 >> el.y >> c2 >> el.val;
-			if(c1!=',' || c2!=',') // bad way to test read success :(
+			int n_read = sscanf(line.c_str(),"%d,%d,%d",&el.x,&el.y,&el.val);
+			if(n_read!=3)
 			{
-				ostringstream oss;
-				oss << "Error reading file (line " << lines_read << ") : expected x,y,val:\n\n" << line;
-				throw(runtime_error(oss.str().c_str()));
+				// something else on the line, ignore
+				continue;
 			}
 			if(state==reading_requireds)
 				r.required.push_back(el);
@@ -1555,6 +1683,7 @@ vector<SlinkerGrid::TRule> SlinkerGrid::GetGrowthRules()
 
 string SlinkerGrid::GetPuzzleAnalysis(const std::vector<TRule>& solving_rules) const
 {
+	//wxMessageBox(_T("Error - function not working, see code."));
 	ostringstream oss;
 	SlinkerGrid g(*this);
 	g.ClearBorders();
@@ -1565,23 +1694,42 @@ string SlinkerGrid::GetPuzzleAnalysis(const std::vector<TRule>& solving_rules) c
 		if(no_guessing_solutions.size()==1)
 		{
 			oss << "Puzzle has a unique solution.\n\n";
+			// work out the difficulty of each rule
+			vector<TRule> sorted_rules(solving_rules);
+			vector<double> difficulty;
+			SlinkerGrid::SortRulesByIncreasingDifficulty(sorted_rules,difficulty);
 			// work out the rules that need be applied
 			const int MAX_ELEMENTS=6;
 			vector<int> n_of_each_class(MAX_ELEMENTS,0);
-			int iRule,iSymm,n_req;
+			double diff,average_difficulty=0.0,max_difficulty=0.0;
+			int iRule,iSymm,n_req,n_rules=0;
 			wxPoint pos;
-			while(g.GetAValidMove(solving_rules,iRule,pos,iSymm))
+			while(g.GetAValidMove(sorted_rules,iRule,pos,iSymm))
 			{
-				if(iRule>13) // we assume a standard set is being used, with the first 13 rules being elemental
+				n_req = sorted_rules[iRule].required.size();
+				if(n_req<MAX_ELEMENTS)
+					n_of_each_class[n_req]++;
+				n_rules++;
+				diff = difficulty[iRule];
+				average_difficulty += diff;
+				if(diff>max_difficulty)
+					max_difficulty = diff;
+				if(false)
 				{
-					n_req = solving_rules[iRule].required.size();
-					if(n_req<MAX_ELEMENTS)
-						n_of_each_class[n_req]++;
+					ostringstream debug;
+					SlinkerGrid pre,post;
+					GetBeforeAndAfterGridsForRule(sorted_rules[iRule],pre,post);
+					debug << "Rule " << iRule+1 << ":\n\n" << pre.GetPrintOut() << "\n\nRequired elements: "
+						<< n_req << "\nDifficulty: " << diff;
+					//TODO: returning incorrect index, causing error - why?
+					wxMessageBox(wxString(debug.str().c_str(),wxConvUTF8));
 				}
-				g.ApplyRule(solving_rules[iRule],pos,iSymm);
+				g.ApplyRule(sorted_rules[iRule],pos,iSymm);
 			}
 			for(int i=2;i<MAX_ELEMENTS;i++)
 				oss << "Number of " << i << "-element rule-applications needed: " << n_of_each_class[i] << "\n";
+			oss << "\nAverage rule difficulty: " << average_difficulty/double(n_rules) << "\n";
+			oss << "Max rule difficulty: " << max_difficulty << "\n";
 		}
 		else
 			oss << "Puzzle has multiple solutions.\n";
@@ -1626,7 +1774,7 @@ bool SlinkerGrid::GetAValidMove(const std::vector<TRule>& rules,int& iRule,wxPoi
 		{
 			for(pos.y=-1;pos.y<(2*Y+1+1);pos.y++)
 			{
-				if(!IsCell(pos.x+2,pos.y+2)) continue;
+				if(!IsCell(pos.x,pos.y)) continue;
 				// does the rule apply here (centred on cell x,y) in any orientation?
 				for(iSymmetry=0;iSymmetry<N_SYMMETRIES;iSymmetry++)
 				{
@@ -1654,4 +1802,215 @@ bool SlinkerGrid::GetAValidMove(const std::vector<TRule>& rules,int& iRule,wxPoi
 		}
 	}
 	return false; // found nothing to apply
+}
+
+void SlinkerGrid::SortRulesByIncreasingDifficulty(vector<TRule> &rules,vector<double> &difficulty)
+{
+	const int N_RULES = rules.size();
+	
+	// fill a large area with a random loop
+	const int N=100;
+	SlinkerGrid g(N,N);
+	g.FillGridWithRandomLoop();
+	g.MarkUnknownBordersAsOff();
+	
+	// count the number of times that each rule could apply
+	vector<int> frequency(rules.size(),0);
+	{
+		vector<TElement>::const_iterator it;
+		bool can_apply;
+		int tx,ty,iRule,iSymmetry;
+		wxPoint pos;
+		for(iRule=0;iRule<N_RULES;iRule++)
+		{
+			const TRule& rule = rules[iRule];
+			for(pos.x=-1;pos.x<(2*g.X+1+1);pos.x++)
+			{
+				for(pos.y=-1;pos.y<(2*g.Y+1+1);pos.y++)
+				{
+					if(!IsCell(pos.x,pos.y)) continue;
+					// does the rule apply here (centred on cell x,y) in any orientation?
+					for(iSymmetry=0;iSymmetry<N_SYMMETRIES;iSymmetry++)
+					{
+						can_apply = true; // until found otherwise
+						for(it=rule.required.begin();it!=rule.required.end() && can_apply;it++)
+						{
+							tx = pos.x + SYMMETRIES[iSymmetry].mX(it->x,it->y);
+							ty = pos.y + SYMMETRIES[iSymmetry].mY(it->x,it->y);
+							if( !( (it->val==0 && IsBorder(tx,ty) && !g.IsOnGrid(tx,ty)) || 
+								(g.IsOnGrid(tx,ty) && g.gridValue(tx,ty)==it->val) ) )
+									can_apply = false;
+	
+						}
+						if(can_apply) 
+							frequency[iRule]++;
+					}
+				}
+			}
+		}
+	}
+	
+	// now sort the rules by increasing difficulty
+	vector<SlinkerGrid::TRule> sorted_rules;
+	{
+		difficulty.clear();
+		difficulty.resize(N_RULES);
+		
+		vector<int> indices(N_RULES);
+		
+		for (int i = 0; i < indices.size(); i++)
+			indices [i] = i;
+		
+		sort (indices.begin (), indices.end (),
+			IndexedComparison<std::vector<int>::const_iterator>
+				(frequency.begin (), frequency.end ()));
+				
+		reverse(indices.begin(),indices.end()); // because we sorted in increasing order
+		
+		for(int i=0;i<N_RULES;i++)
+		{
+			sorted_rules.push_back(rules[indices[i]]);
+			difficulty[i] = max(0.0,1.0-(frequency[indices[i]]/double(N*N)));
+		}
+	}
+	
+	// copy the rules over
+	rules.clear();
+	rules.assign(sorted_rules.begin(),sorted_rules.end());
+}
+
+void SlinkerGrid::MakePuzzleByAddingHardClues(const vector<TRule>& rules)
+{
+	// N.B. this seemed like a good idea but didn't work at all. 
+
+	// first fill a grid with a nice loop
+	SlinkerGrid solution(*this);
+	solution.Clear();
+	solution.FillGridWithRandomLoop();
+	
+	ofstream debug("debug.txt");
+	debug << solution.GetPrintOut();
+	
+	Clear();
+	
+	// until the puzzle is completely specified, add the numbers that are needed to provide
+	// one of the hardest of rules, then apply the rules and repeat
+	vector<TElement>::const_iterator it;
+	vector<int*> changed1,changed2;
+	bool can_apply;
+	int tx,ty,iRule,iSymmetry;
+	wxPoint pos;
+	bool found_one;
+	
+	int n_clues_supplied=0;
+	 
+	for(int pass=0;pass<2;pass++)
+	{
+		do 
+		{
+			found_one = false;
+			for(iRule=rules.size()-1;iRule>=0 && !found_one;iRule--) // start by looking for the hardest rules
+			{
+				const TRule& rule = rules[iRule];
+				for(pos.x=-1;pos.x<(2*X+1+1) && !found_one;pos.x++)
+				{
+					for(pos.y=-1;pos.y<(2*Y+1+1) && !found_one;pos.y++)
+					{
+						if(!IsCell(pos.x,pos.y)) continue;
+						for(iSymmetry=0;iSymmetry<N_SYMMETRIES && !found_one;iSymmetry++)
+						{
+							// could the rule apply here, if we added whatever numbers were necessary?
+							// i.e. are the numbers in the solution, and the borders in the grid - if so then yes.
+							
+							can_apply = true; // until found otherwise
+							bool has_at_least_one_number_missing=false;
+							for(it=rule.required.begin();it!=rule.required.end() && can_apply;it++)
+							{
+								tx = pos.x + SYMMETRIES[iSymmetry].mX(it->x,it->y);
+								ty = pos.y + SYMMETRIES[iSymmetry].mY(it->x,it->y);
+								if( !( (it->val==0 && IsBorder(tx,ty) && !IsOnGrid(tx,ty)) ||  // (either off-grid and an off border
+									( IsOnGrid(tx,ty) && 
+										(
+											(IsBorder(tx,ty) && gridValue(tx,ty)==it->val) || // or a border on this grid
+											(IsCell(tx,ty) && solution.gridValue(tx,ty)==it->val)  // or a cell on the solution grid
+										) 
+									) ) ) 
+										can_apply = false;
+								if(IsOnGrid(tx,ty) && IsCell(tx,ty) && gridValue(tx,ty)==UNKNOWN)
+									has_at_least_one_number_missing = true;
+							}
+							bool gives_us_something_we_didnt_know = false;
+							for(it=rule.implied.begin();it!=rule.implied.end() && !gives_us_something_we_didnt_know;it++)
+							{
+								tx = pos.x + SYMMETRIES[iSymmetry].mX(it->x,it->y);
+								ty = pos.y + SYMMETRIES[iSymmetry].mY(it->x,it->y);
+								if(IsOnGrid(tx,ty) && IsBorder(tx,ty) && gridValue(tx,ty)==UNKNOWN)
+									gives_us_something_we_didnt_know = true;
+							}
+							if(can_apply && has_at_least_one_number_missing && gives_us_something_we_didnt_know) 
+							{
+								if(pass==0)
+								{
+									// check whether with these clues we'd actually need the rule itself to find this stuff out
+									SlinkerGrid g(*this);
+									// add the clues required to the test grid
+									for(it=rule.required.begin();it!=rule.required.end() && can_apply;it++)
+									{
+										tx = pos.x + SYMMETRIES[iSymmetry].mX(it->x,it->y);
+										ty = pos.y + SYMMETRIES[iSymmetry].mY(it->x,it->y);
+										if(IsCell(tx,ty) && gridValue(tx,ty)==UNKNOWN)
+											g.gridValue(tx,ty)=it->val;
+									}
+									vector<TRule> other_rules;
+									for(int ir=0;ir<rules.size();ir++)
+										if(ir!=iRule) other_rules.push_back(rules[ir]);
+									g.ApplyRules(other_rules,changed1);
+									g.ApplyRules(rules,changed2);
+									if(!changed2.empty())
+									{
+										found_one = true;
+										*this = g;
+									}
+								}
+								else if(pass==1) // on the second pass we relax this condition
+								{
+									// add the clues required to the test grid
+									for(it=rule.required.begin();it!=rule.required.end() && can_apply;it++)
+									{
+										tx = pos.x + SYMMETRIES[iSymmetry].mX(it->x,it->y);
+										ty = pos.y + SYMMETRIES[iSymmetry].mY(it->x,it->y);
+										if(IsCell(tx,ty) && gridValue(tx,ty)==UNKNOWN)
+											gridValue(tx,ty)=it->val;
+									}
+									ApplyRules(rules,changed1);
+									found_one=true;
+								}
+							}
+						}
+					}
+				}
+			}
+		} while(found_one);
+	}
+}
+
+double SlinkerGrid::GetPuzzleDifficulty(const std::vector<TRule> &sorted_rules,const std::vector<double> &difficulty) const
+{
+	SlinkerGrid g(*this);
+	g.ClearBorders();
+	// work out the rules that need be applied
+	double diff,average_difficulty=0.0,max_difficulty=0.0;
+	int iRule,iSymm,n_rules=0;
+	wxPoint pos;
+	while(g.GetAValidMove(sorted_rules,iRule,pos,iSymm))
+	{
+		n_rules++;
+		diff = difficulty[iRule];
+		average_difficulty += diff;
+		if(diff>max_difficulty)
+			max_difficulty = diff;
+		g.ApplyRule(sorted_rules[iRule],pos,iSymm);
+	}
+	average_difficulty /= n_rules;
+	return max_difficulty; // or average difficulty? or something else?
 }
