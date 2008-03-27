@@ -29,11 +29,13 @@
 #include "DrawSlinkerGrid.h"
 #include "solving_rules_3.h"
 #include "solving_rules_4.h"
+#include "IndexedComparison.h"
 
 // STL:
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 using namespace std;
 
 // the event tables connect the wxWidgets events with the functions (event
@@ -57,14 +59,18 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	
 	// puzzle menu
 	EVT_MENU(ID::MakeAPuzzle,MainFrame::OnMakeAPuzzle)
-	EVT_MENU(ID::GiveAHint,MainFrame::OnGiveAHint)
 	EVT_MENU(ID::Clear,MainFrame::OnClear)
+	EVT_MENU(ID::GiveAHint,MainFrame::OnGiveAHint)
+	EVT_MENU(ID::Solve,MainFrame::OnSolve)
+	EVT_MENU(ID::ShowTheSolution,MainFrame::OnShowTheSolution)
 
 	// analysis menu
-	EVT_MENU(ID::DemonstrateLoopGrowthRules,MainFrame::OnDemonstrateLoopGrowthRules)
 	EVT_MENU(ID::AnalyzePuzzleDifficulty,MainFrame::OnAnalyzePuzzleDifficulty)
+	EVT_MENU(ID::AnalyzeALargeRandomLoopForRuleDistribution,MainFrame::OnAnalyzeALargeRandomLoopForRuleDistribution)
 	EVT_MENU(ID::SearchForNewRules, MainFrame::OnSearchForNewRules)
 	EVT_MENU(ID::ConvertRulesFileToCCode,MainFrame::OnConvertRulesFileToCCode)
+	EVT_MENU(ID::DemonstrateLoopGrowthRules,MainFrame::OnDemonstrateLoopGrowthRules)
+	EVT_MENU(ID::CheckRuleSetForRedundancy,MainFrame::OnCheckRuleSetForRedundancy)
 	
 END_EVENT_TABLE()
 
@@ -98,14 +104,20 @@ MainFrame::MainFrame(const wxString& title)
 		puzzleMenu->Append(ID::Clear,_T("Clear the grid borders"),_T("Clear all the borders, and start again."));
 		puzzleMenu->AppendSeparator();
 		puzzleMenu->Append(ID::GiveAHint,_T("Give a hint\tF3"),_T("Show a rule that can be applied."));
+		puzzleMenu->AppendSeparator();
+		puzzleMenu->Append(ID::Solve,_T("Solve"),_T("Find a solution to the current puzzle"));
+		puzzleMenu->Append(ID::ShowTheSolution,_T("Show the solution"),_T("Show the solution to the current puzzle"));
 		menuBar->Append(puzzleMenu, _T("&Puzzle"));
 	}
 
 	{
 		wxMenu *analysisMenu = new wxMenu;
 		analysisMenu->Append(ID::DemonstrateLoopGrowthRules,_T("Demonstrate the growth rules"),_T("Make an animation that shows the way Slinker generates random loops."));
+		analysisMenu->AppendSeparator();
+		analysisMenu->Append(ID::AnalyzeALargeRandomLoopForRuleDistribution,_T("Analyze a large random loop for rule distribution..."),_T("Generates a large loop and sees how many times each rule could be used."));
 		analysisMenu->Append(ID::AnalyzePuzzleDifficulty,_T("Analyze the current puzzle's difficulty..."),_T("Compute some statistics about the current puzzle's difficulty."));
 		analysisMenu->Append(ID::ConvertRulesFileToCCode,_T("Convert a rules file to C/C++ code..."),_T("Given a ruleset in a .txt file, convert it to a .h file that can be linked into source code directly."));
+		analysisMenu->Append(ID::CheckRuleSetForRedundancy,_T("Check a ruleset for redundancy..."),_T("Searches a ruleset for any rules fully given by the others."));
 		analysisMenu->AppendSeparator();
 		analysisMenu->Append(ID::SearchForNewRules,_T("Search for new rules.."),_T("(Advanced function) Given the existing rules, searches for more complex ones"));
 		menuBar->Append(analysisMenu,_T("&Analysis"));
@@ -136,9 +148,12 @@ void MainFrame::MakeAnInitialPuzzle()
 	UpdateEnabledState();
 	wxBusyCursor busy;
 	
-	this->main_grid.SlinkerGrid::MakePuzzle(GetSolvingRules4(),false);
+	SlinkerGrid::ReadRulesFromFile("solving_rules_5.txt",this->solving_rules);
+	this->main_grid.SlinkerGrid::MakePuzzleByRemovingRandomClues(this->solving_rules,false);
+	//this->main_grid.SlinkerGrid::MakePuzzleByAddingClues(this->solving_rules,false);
 	this->the_solution = this->main_grid;
 	this->main_grid.ClearBorders();
+	this->has_solved = false;
 	
 	working = false;
 	UpdateEnabledState();
@@ -342,6 +357,7 @@ void MainFrame::OnMakeAPuzzle(wxCommandEvent& event)
     }
 	// ask user for the ruleset (or just use the current one)
 	{
+		//SlinkerGrid::ReadRulesFromFile("solving_rules_5.txt",this->solving_rules);
 		wxArrayString choices;
 		choices.Add(_T("beginner level"));
 		choices.Add(_T("intermediate level")); // TODO: custom level (load own rule file) ?
@@ -360,9 +376,9 @@ void MainFrame::OnMakeAPuzzle(wxCommandEvent& event)
 			return; // user cancelled
 		delete []strings;
 		// (wxGetSingleChoiceIndex ignores the size parameters passed)
-    }
+	}
 	// ask user whether brute-force solving is also allowed
-	bool guessing_allowed;
+	bool guessing_allowed=false;
 	{
 		wxArrayString choices;
 		choices.Add(_T("no brute force - puzzles will be fully deducible, and easier"));
@@ -385,7 +401,9 @@ void MainFrame::OnMakeAPuzzle(wxCommandEvent& event)
 	UpdateEnabledState();
 	
 	SlinkerGrid g(size.x,size.y,grid_shape);
-	g.MakePuzzle(this->solving_rules,guessing_allowed);
+	g.MakePuzzleByRemovingRandomClues(this->solving_rules,guessing_allowed);
+	//g.MakePuzzleByAddingClues(this->solving_rules,guessing_allowed);
+	//g.MakePuzzleByAddingHardClues(this->solving_rules);
 	this->the_solution = g;
 	g.ClearBorders();
 	this->main_grid = g;
@@ -514,7 +532,7 @@ void MainFrame::OnClear(wxCommandEvent &event)
 void MainFrame::OnGiveAHint(wxCommandEvent& event)
 {
 	//if(this->solving_rules.empty() && !AskUserForSolvingRulesFile()) return;
-	this->solving_rules = GetSolvingRules4();
+	if(this->solving_rules.empty()) this->solving_rules = GetSolvingRules4();
 	int iRule,iSymmetry;
 	wxPoint pos;
 	bool found_one = this->main_grid.GetAValidMove(this->solving_rules,iRule,pos,iSymmetry);
@@ -609,6 +627,91 @@ void MainFrame::OnConvertRulesFileToCCode(wxCommandEvent& event)
 		out << "\treturn rules;\n}\n\n#endif\n";
 	}
 	catch(exception e)
+	{
+		wxMessageBox(wxString(e.what(),wxConvUTF8));
+	}
+}
+
+void MainFrame::OnSolve(wxCommandEvent &event)
+{
+	wxLogStatus(_T("Working... (may take some time for larger puzzles)"));
+	wxBusyCursor busy;
+	working=true;
+	UpdateEnabledState();
+	
+	// TODO: need a faster solver for situations where we just want to see the solution
+	vector<SlinkerGrid> solutions = this->main_grid.FindSolutions(GetSolvingRules4(),true,2);
+	
+	working=false;
+	wxLogStatus(_T(""));
+	UpdateEnabledState();
+	
+	if(solutions.empty())
+		wxMessageBox(_T("No solutions found for the grid in its current state.\n\nEither some borders are wrong, or this is not\na valid puzzle."));
+	else if(solutions.size()>1)
+		wxMessageBox(_T("Multiple solutions were found for this grid."));
+	else
+	{
+		this->main_grid = solutions.front();
+		Refresh(false);
+		this->has_solved = true;
+	}
+}
+
+void MainFrame::OnAnalyzeALargeRandomLoopForRuleDistribution(wxCommandEvent &event)
+{
+	wxBusyCursor busy;
+	
+	vector<SlinkerGrid::TRule> rules = GetSolvingRules4(); // or ask user
+	vector<double> difficulty(rules.size());
+	SlinkerGrid::SortRulesByIncreasingDifficulty(rules,difficulty);
+	SlinkerGrid::WriteRulesToFile(rules,"sorted_rules.txt");
+	wxMessageBox(_T("Sorted ruleset writen to sorted_rules.txt"));
+}
+
+void MainFrame::OnShowTheSolution(wxCommandEvent &event)
+{
+	RuleDepictionDialog dlg(this,wxID_ANY,_T("Solution:"),this->main_grid,this->the_solution);
+	dlg.ShowModal();
+}
+
+void MainFrame::OnCheckRuleSetForRedundancy(wxCommandEvent& event)
+{
+	wxString filename = wxFileSelector(_T("Specify the solving rules file to use:"),_T(""),_T("*.txt"),_T("txt"),
+		_T("*.txt"),wxOPEN|wxFILE_MUST_EXIST);
+	if(filename.empty()) return;
+	try 
+	{
+		vector<SlinkerGrid::TRule> rules;
+		SlinkerGrid::ReadRulesFromFile(string(filename.fn_str()),rules);
+		
+		ostringstream oss;
+		oss << "Searching " << rules.size() << " rules...";
+		wxLogStatus(wxString(oss.str().c_str(),wxConvUTF8));
+		this->working = true;
+		wxBusyCursor busy;
+		UpdateEnabledState();
+		
+		vector<SlinkerGrid::TRule> nonredundant_rules;
+		SlinkerGrid::FindNonRedundantRules(rules,nonredundant_rules);
+		
+		if(rules.size()==nonredundant_rules.size())
+		{
+			wxMessageBox(_T("No redundant rules found."));
+		}
+		else
+		{
+			wxString output_filename = wxFileSelector(_T("Redundant rules removed, specify where to save the new rules file:"),_T(""),_T("*.txt"),_T("txt"),
+			_T("*.txt"),wxSAVE|wxOVERWRITE_PROMPT);
+			if(!output_filename.empty())
+				SlinkerGrid::WriteRulesToFile(nonredundant_rules,string(output_filename.fn_str()));
+		}
+		
+		this->working = false;
+		wxLogStatus(wxT(""));
+		UpdateEnabledState();
+	}
+	catch(const exception& e)
 	{
 		wxMessageBox(wxString(e.what(),wxConvUTF8));
 	}

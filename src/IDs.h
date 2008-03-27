@@ -37,13 +37,17 @@ namespace ID
 	
 		// puzzle menu
 		MakeAPuzzle,
-		GiveAHint,
 		Clear,
+		GiveAHint,
+		Solve,
+		ShowTheSolution,
 		
 		// analysis menu
-		DemonstrateLoopGrowthRules,
 		AnalyzePuzzleDifficulty,
+		AnalyzeALargeRandomLoopForRuleDistribution,
 		SearchForNewRules,
 		ConvertRulesFileToCCode,
+		DemonstrateLoopGrowthRules,
+		CheckRuleSetForRedundancy,
 	};
 };

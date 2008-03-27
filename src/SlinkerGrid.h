@@ -67,6 +67,9 @@ class SlinkerGrid
 		/// read some rules from a file
 		static void ReadRulesFromFile ( const std::string &filename,std::vector<TRule> &rules );
 		
+		/// rules can be written to disk for sharing
+		static void WriteRulesToFile ( const std::vector<TRule> &rules,const std::string &filename );
+
 		/// given the elementary slitherlink rules, search for new ones involving more elements
 		static void FindNewRules();
 
@@ -91,6 +94,12 @@ class SlinkerGrid
 		static bool IsHorizontalBorder ( int x,int y );
 		static bool IsVerticalBorder ( int x,int y );
 
+		/// given a set of rules, find those which are not specified by the others
+		static void FindNonRedundantRules ( const std::vector<TRule> &rules,std::vector<TRule>& nonredundant_rules );
+		
+		/// estimate the difficulty of each rule by counting its frequency and sort the rules accordingly
+		static void SortRulesByIncreasingDifficulty(std::vector<TRule> &rules,std::vector<double> &difficulty);
+	
 	public: // public non-static methods
 
 		/// constructor
@@ -138,7 +147,18 @@ class SlinkerGrid
 		/**  @param rules the solving rules that will be used to solve candidate puzzles
 		*    @param guessing_allowed if true, then the rules are used only for speedup - the returned puzzle may need back-tracking to be solved; if false then the puzzle is solvable with just the rules provided
 		*/
-		void MakePuzzle(const std::vector<TRule>& rules,bool guessing_allowed);
+		void MakePuzzleByRemovingRandomClues(const std::vector<TRule>& rules,bool guessing_allowed);
+		
+		/// given the grid size and shape, make a puzzle with a unique solution by adding clues one by one
+		/**  @param rules the solving rules that will be used to solve candidate puzzles
+		*    @param guessing_allowed if true, then the rules are used only for speedup - the returned puzzle may need back-tracking to be solved; if false then the puzzle is solvable with just the rules provided
+		*/
+		void MakePuzzleByAddingClues(const std::vector<TRule>& rules,bool guessing_allowed);
+		
+		/// given the grid size and shape, make a puzzle with a unique solution
+		/**  @param sorted_rules the solving rules that will be used to solve candidate puzzles, ordered with the more common rules first
+		*/
+		void MakePuzzleByAddingHardClues(const std::vector<TRule>& sorted_rules);
 		
 		/// set all borders to UNKNOWN
 		void ClearBorders();
@@ -151,6 +171,9 @@ class SlinkerGrid
 
 		/// for nicer printing: set all off borders to UNKNOWN, which prints as a blank
 		void MarkOffBordersAsUnknown();
+
+		/// we've finished a grid, fill all the unknown borders with definite off state
+		void MarkUnknownBordersAsOff();
 
 		/// given an empty grid, generate a long wiggly loop line
 		void FillGridWithRandomLoop();
@@ -182,9 +205,16 @@ class SlinkerGrid
 		*/
 		bool GetAValidMove(const std::vector<TRule>& rules,int& iRule,wxPoint& pos,int& iSymmetry);
 
-		// apply a rule to the grid (assumes is applicable)
+		/// apply a rule to the grid (assumes is applicable)
 		void ApplyRule(const TRule& rule,wxPoint& pos,int& iSymmetry);
-	
+		
+		/// return the difficulty of the puzzle
+		/** @param sorted_rules a set of rules sorted by difficulty
+		*   @param difficulty the difficulty of each rule
+		*   @return the overall difficulty of the puzzle
+		*/
+		double GetPuzzleDifficulty(const std::vector<TRule> &sorted_rules,const std::vector<double> &difficulty) const;
+
 	private: // private classes
 
 		/// a 2x2 integer matrix for reflections and quarter rotations
@@ -252,18 +282,12 @@ class SlinkerGrid
 		void FollowPossibilities ( const std::vector<TRule> &solving_rules,std::vector<SlinkerGrid> &solutions,
 								bool guessing_allowed,unsigned int max_n_wanted_solutions );
 
-		/// rules can be written to disk for sharing
-		static void WriteRulesToFile ( const std::vector<TRule> &rules,const std::string &filename );
-
 		/// apply whatever local implication rules are valid
 		/** @param rules the local solving rules that we use
 			@param changed on return, gets pointers of the entries that were changed from UNKNOWN, can be passed into SlinkerGrid::UndoChanges()
 			@return returns false when a grid is inconsistent, else true
 		*/
 		bool ApplyRules ( const std::vector<TRule>& rules,std::vector<int*> &changed );
-
-		/// given a set of rules, find those which are not specified by the others
-		static void FindNonRedundantRules ( const std::vector<TRule> &rules,std::vector<TRule>& nonredundant_rules );
 
 		/// changes must have been made on this grid
 		void UndoChanges ( const std::vector<int*> &changed );
@@ -276,9 +300,6 @@ class SlinkerGrid
 
 		/// extract all dots that are connected to the one passed at the head of the array
 		void CollectJoinedDots ( std::vector< std::pair<int,int> > &dots ) const;
-
-		/// we've finished a grid, fill all the unknown borders with definite off state
-		void MarkUnknownBordersAsOff();
 
 		/// would turning this border on make a loop?
 		bool WouldMakeALoop ( int x,int y ) const;

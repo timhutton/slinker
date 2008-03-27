@@ -45,14 +45,18 @@ public:
 	
 	// puzzle menu
 	void OnMakeAPuzzle(wxCommandEvent& event);
-	void OnGiveAHint(wxCommandEvent& event);
 	void OnClear(wxCommandEvent &event);
+	void OnGiveAHint(wxCommandEvent& event);
+	void OnSolve(wxCommandEvent &event);
+	void OnShowTheSolution(wxCommandEvent &event);
 	
 	// analysis menu
-	void OnDemonstrateLoopGrowthRules(wxCommandEvent& event);
 	void OnAnalyzePuzzleDifficulty(wxCommandEvent& event);
+	void OnAnalyzeALargeRandomLoopForRuleDistribution(wxCommandEvent& event);
 	void OnSearchForNewRules(wxCommandEvent& event);
 	void OnConvertRulesFileToCCode(wxCommandEvent& event);
+	void OnDemonstrateLoopGrowthRules(wxCommandEvent& event);
+	void OnCheckRuleSetForRedundancy(wxCommandEvent& event);
 	
 private: // private data
 
