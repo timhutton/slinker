@@ -147,8 +147,15 @@ void MainFrame::MakeAnInitialPuzzle()
 	working = true;
 	UpdateEnabledState();
 	wxBusyCursor busy;
-	
-	SlinkerGrid::ReadRulesFromFile("solving_rules_5.txt",this->solving_rules);
+
+	try {
+		SlinkerGrid::ReadRulesFromFile("solving_rules_5.txt",this->solving_rules);
+	}
+	catch(...)
+	{
+		wxMessageBox("Failed to read file: solving_rules_5.txt\n\nPlease put it in the same location as the executable.");
+		return;
+	}
 	this->main_grid.SlinkerGrid::MakePuzzleByRemovingRandomClues(this->solving_rules,false);
 	//this->main_grid.SlinkerGrid::MakePuzzleByAddingClues(this->solving_rules,false);
 	this->the_solution = this->main_grid;
