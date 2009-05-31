@@ -153,7 +153,7 @@ void MainFrame::MakeAnInitialPuzzle()
 	}
 	catch(...)
 	{
-		wxMessageBox("Failed to read file: solving_rules_5.txt\n\nPlease put it in the same location as the executable.");
+		wxMessageBox(wxString("Failed to read file: solving_rules_5.txt\n\nPlease put it in the same location as the executable.",wxConvUTF8));
 		return;
 	}
 	this->main_grid.SlinkerGrid::MakePuzzleByRemovingRandomClues(this->solving_rules,false);
