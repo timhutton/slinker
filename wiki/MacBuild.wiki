@@ -1,0 +1,21 @@
+#summary Instructions for installing Slinker on the Mac platform
+
+== Installation: == 
+To install Slinker on your Mac you will have to:
+  # Open a Terminal window, browse to Slinker's folder
+  # Go to the 'src' folder and inside create a new 'bin' directory
+  # Go to 'bin' in the Terminal and run the following commands from inside that directory:
+
+{{{
+cmake ~/Desktop/Slinker-0.1.0-Source
+}}}
+(adapt the path to point to Slinker's folder)
+
+{{{
+make
+}}}
+
+{{{
+./Slinker
+}}}
+(to launch Slinker)
