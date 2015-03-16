@@ -14,7 +14,7 @@ The current version of Slinker is 0.1. The following downloads are available:
 
 Slinker works on Mac too: [MacBuild](https://github.com/timhutton/slinker/wiki/MacBuild)
 
-Changes since earlier revisions: [ChangeList](https://github.com/timhutton/slinker/wiki/MacBuild)
+Changes since earlier revisions: [ChangeList](https://github.com/timhutton/slinker/wiki/ChangeList)
 
 ### Screenshots ###
 
