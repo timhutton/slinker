@@ -55,3 +55,4 @@ Links
     * [Loopy](http://www.chiark.greenend.org.uk/~sgtatham/puzzles/)
     * [KrazyDad](http://www.krazydad.com/slitherlink/) (Loopy code adapted for hexagonal and Penrose grids)
     * [Loop-de-Loop](http://www.deadofnight.org/?x=other)
+
