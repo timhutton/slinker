@@ -1,10 +1,12 @@
-=== Summary ===
+Summary
+=======
 
 Slinker is an attempt to capture the best way to generate slitherlink-type puzzles. 
 
-(Slitherlink is probably a trademark of [http://www.nikoli.co.jp Nikoli] who invented the puzzle, so go to them if you want to buy genuine quality puzzles.)
+(Slitherlink is probably a trademark of [Nikoli](http://www.nikoli.co.jp) who invented the puzzle, so go to them if you want to buy genuine quality puzzles.)
 
-=== Downloads ===
+Downloads
+=========
 
 The current version of Slinker is 0.1. The following downloads are available:
 
@@ -18,13 +20,15 @@ Changes since earlier revisions: ChangeList
 
 Alternatively you can download the unstable development version of Slinker here: [http://code.google.com/p/slinker/source/checkout svn repository].
 
-=== Screenshots ===
+Screenshots
+===========
 
 http://slinker.googlecode.com/files/slinker-0.1_screenshot1_linux.png 
 
    Slinker 0.1 under Linux
 
-=== Status ===
+Status
+======
 
 Slinker can:
   * create and solve puzzles of different difficulties using a set of rules
@@ -34,7 +38,8 @@ Slinker can:
   * import/export puzzles as a Loopy string
   * compute more rules, if `SlinkerGrid::FindNewRules()` makes sense to you
 
-=== Future work ===
+Future work
+===========
 
   * Undo/redo, fix position.
   * Puzzle creation should be faster - can we derive 'number removal' rules that tell us which numbers can be removed for a given local situation, given a set of solving rules?
@@ -45,10 +50,11 @@ Slinker can:
   * May want to make 'special situation' puzzles - e.g. those involving only '2's, or those with certain areas empty. How to allow the user to do this? Or provide the programmer with tools to do this?
   * Analysis of puzzle difficulty - max/average level of rules required to solve, need for highlander, etc.? Ideally we'd like to be able to rate every puzzle as scientifically as possible, and seek consensus on the method. 
 
-=== Links ===
+Links
+=====
 
-  * [http://www.kwontomloop.com Kwon-Tom Loop] - an amazing community of Slitherlink-obsessed geniuses.
+  * [Kwon-Tom Loop](http://www.kwontomloop.com) - an amazing community of Slitherlink-obsessed geniuses.
   * Other Slitherlink puzzle generators: (please tell me of any more you know)
-    * [http://www.chiark.greenend.org.uk/~sgtatham/puzzles/ Loopy]
-    * [http://www.krazydad.com/slitherlink/ KrazyDad] (Loopy code adapted for hexagonal and Penrose grids)
-    * [http://www.deadofnight.org/?x=other Loop-de-Loop]
+    * [Loopy](http://www.chiark.greenend.org.uk/~sgtatham/puzzles/)
+    * [KrazyDad](http://www.krazydad.com/slitherlink/) (Loopy code adapted for hexagonal and Penrose grids)
+    * [Loop-de-Loop](http://www.deadofnight.org/?x=other)
