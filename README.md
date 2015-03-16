@@ -8,19 +8,17 @@ Slinker is an attempt to capture the best way to generate slitherlink-type puzzl
 
 The current version of Slinker is 0.1. The following downloads are available:
 
-  * [Windows executable](http://slinker.googlecode.com/files/Slinker-0.1.1-win32.exe) (417KB)
-  * [Linux executable](http://slinker.googlecode.com/files/Slinker-0.1.0-Linux.sh) (112KB)
-  * [source code](http://slinker.googlecode.com/files/Slinker-0.1.0-Source.tar.gz) (59KB) - for all popular platforms, see the [README.txt](README.txt) for build requirements and instructions.
+  * [Windows executable](https://github.com/timhutton/slinker/releases/download/release-0.1/Slinker-0.1.1-win32.exe) (417KB)
+  * [Linux executable](https://github.com/timhutton/slinker/releases/download/release-0.1/Slinker-0.1.0-Linux.sh) (112KB)
+  * [source code](https://github.com/timhutton/slinker/releases/download/release-0.1/Slinker-0.1.0-Source.tar.gz) (59KB) - for all popular platforms, see the [README.txt](README.txt) for build requirements and instructions.
 
 Slinker works on Mac too: [MacBuild](https://github.com/timhutton/slinker/wiki/MacBuild)
 
 Changes since earlier revisions: [ChangeList](https://github.com/timhutton/slinker/wiki/MacBuild)
 
-Alternatively you can download the unstable development version of Slinker here: [svn repository](http://code.google.com/p/slinker/source/checkout).
-
 ### Screenshots ###
 
-![http://slinker.googlecode.com/files/slinker-0.1_screenshot1_linux.png](http://slinker.googlecode.com/files/slinker-0.1_screenshot1_linux.png)
+![https://github.com/timhutton/slinker/releases/download/release-0.1/slinker-0.1_screenshot1_linux.png](https://github.com/timhutton/slinker/releases/download/release-0.1/slinker-0.1_screenshot1_linux.png)
 
 > Slinker 0.1 under Linux
 
