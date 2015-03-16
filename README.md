@@ -10,9 +10,9 @@ Downloads
 
 The current version of Slinker is 0.1. The following downloads are available:
 
-  * [http://slinker.googlecode.com/files/Slinker-0.1.1-win32.exe Windows executable] (417KB)
-  * [http://slinker.googlecode.com/files/Slinker-0.1.0-Linux.sh Linux executable] (112KB)
-  * [http://slinker.googlecode.com/files/Slinker-0.1.0-Source.tar.gz source code] (59KB) - for all popular platforms, see the [http://code.google.com/p/slinker/source/browse/trunk/README.txt README.txt] for build requirements and instructions.
+  * [Windows executable](https://github.com/timhutton/slinker/releases/download/release-0.1/Slinker-0.1.1-win32.exe) (417KB)
+  * [Linux executable](https://github.com/timhutton/slinker/releases/download/release-0.1/Slinker-0.1.0-Linux.sh) (112KB)
+  * [source code](https://github.com/timhutton/slinker/releases/download/release-0.1/Slinker-0.1.0-Source.tar.gz) (59KB) - for all popular platforms, see the [](README.txt) for build requirements and instructions.
 
 Slinker works on Mac too: MacBuild 
 
@@ -23,9 +23,8 @@ Alternatively you can download the unstable development version of Slinker here:
 Screenshots
 ===========
 
-http://slinker.googlecode.com/files/slinker-0.1_screenshot1_linux.png 
+[Slinker 0.1 under Linux](https://github.com/timhutton/slinker/releases/download/release-0.1/slinker-0.1_screenshot1_linux.png)
 
-   Slinker 0.1 under Linux
 
 Status
 ======
