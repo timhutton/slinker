@@ -12,7 +12,7 @@ The current version of Slinker is 0.1. The following downloads are available:
   * [Linux executable](http://slinker.googlecode.com/files/Slinker-0.1.0-Linux.sh) (112KB)
   * [source code](http://slinker.googlecode.com/files/Slinker-0.1.0-Source.tar.gz) (59KB) - for all popular platforms, see the [README.txt](http://code.google.com/p/slinker/source/browse/trunk/README.txt) for build requirements and instructions.
 
-Slinker works on Mac too: MacBuild
+Slinker works on Mac too: [MacBuild](wiki/MacBuild)
 
 Changes since earlier revisions: ChangeList
 
