@@ -285,7 +285,7 @@ void MainFrame::OnDemonstrateLoopGrowthRules(wxCommandEvent& event)
 bool MainFrame::AskUserForSolvingRulesFile()
 {
 	wxString filename = wxFileSelector(_T("Specify the solving rules file to use:"),_T(""),_T("*.txt"),_T("txt"),
-		_T("*.txt"),wxOPEN|wxFILE_MUST_EXIST);
+		_T("*.txt"),wxFD_OPEN|wxFD_FILE_MUST_EXIST);
 	if(filename.empty()) return false;
 	try {
 		this->solving_rules.clear();
@@ -586,13 +586,13 @@ void MainFrame::OnImportLoopyPuzzleString(wxCommandEvent& event)
 void MainFrame::OnConvertRulesFileToCCode(wxCommandEvent& event)
 {
 	wxString filename = wxFileSelector(_T("Specify the solving rules file to use:"),_T(""),_T("*.txt"),_T("txt"),
-		_T("*.txt"),wxOPEN|wxFILE_MUST_EXIST);
+		_T("*.txt"),wxFD_OPEN|wxFD_FILE_MUST_EXIST);
 	if(filename.empty()) return;
 	try {
 		vector<SlinkerGrid::TRule> rules;
 		SlinkerGrid::ReadRulesFromFile(string(filename.fn_str()),rules);
 		wxString output_filename = wxFileSelector(_T("Specify where to save the file:"),_T(""),_T("*.h"),_T("h"),
-		_T("*.h"),wxSAVE|wxOVERWRITE_PROMPT);
+		_T("*.h"),wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
 		if(output_filename.empty()) return;
 		// write to file as a C function
 		ofstream out(output_filename.fn_str());
@@ -685,7 +685,7 @@ void MainFrame::OnShowTheSolution(wxCommandEvent &event)
 void MainFrame::OnCheckRuleSetForRedundancy(wxCommandEvent& event)
 {
 	wxString filename = wxFileSelector(_T("Specify the solving rules file to use:"),_T(""),_T("*.txt"),_T("txt"),
-		_T("*.txt"),wxOPEN|wxFILE_MUST_EXIST);
+		_T("*.txt"),wxFD_OPEN|wxFD_FILE_MUST_EXIST);
 	if(filename.empty()) return;
 	try 
 	{
@@ -709,7 +709,7 @@ void MainFrame::OnCheckRuleSetForRedundancy(wxCommandEvent& event)
 		else
 		{
 			wxString output_filename = wxFileSelector(_T("Redundant rules removed, specify where to save the new rules file:"),_T(""),_T("*.txt"),_T("txt"),
-			_T("*.txt"),wxSAVE|wxOVERWRITE_PROMPT);
+			_T("*.txt"),wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
 			if(!output_filename.empty())
 				SlinkerGrid::WriteRulesToFile(nonredundant_rules,string(output_filename.fn_str()));
 		}
